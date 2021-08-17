@@ -1,1 +1,6 @@
 pyroute2
+addict
+logging
+socket
+struct
+atexit
