@@ -51,3 +51,4 @@ if __name__ == "__main__":
     ip_addr_2 = "10.0.0.2"
     port = "24"
     setup(ip_addr_1, port, ip_addr_2, port)
+    remove_namespaces()
