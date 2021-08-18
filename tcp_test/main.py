@@ -38,36 +38,49 @@ def test_session():
         default=1,
     )
     parser.add_argument(
-        "--rely",
+        "--rely-path",
         type=str,
-        help="A bool determining if rely is activated or not",
-        default="False",
+        help="The path to the Rely-app binary",
+        default="",
     )
 
     args = parser.parse_args()
-    args.rely = args.rely == "true"
 
     atexit.register(clean_up)
 
     for loss in default_packet_losses:
+
+        if not loss == default_packet_losses[0]:
+            clean_up()
+
         setup()
 
         os.system(
-            f"ip netns exec server tc qdisc add dev server_link root netem delay {args.server_latency}ms loss {loss}%"
+            f"sudo ip netns exec server tc qdisc add dev server_link root netem delay {args.server_latency}ms loss {loss}%"
         )
         os.system(
-            f"ip netns exec client tc qdisc add dev client_link root netem delay {args.client_latency}ms"
+            f"sudo ip netns exec client tc qdisc add dev client_link root netem delay {args.client_latency}ms"
+        )
+
+        if args.rely_path:
+            os.system(
+                f"sudo gnome-terminal -- ip netns exec server {args.rely_path} tun --local_endpoint 10.0.0.1:5000 --remote_endpoint 10.0.0.2:5000 --tunnel_ip 11.11.11.11"
+            )
+            os.system(
+                f"sudo gnome-terminal -- ip netns exec client {args.rely_path} tun --local_endpoint 10.0.0.2:5000 --remote_endpoint 10.0.0.1:5000 --tunnel_ip 11.11.11.22"
+            )
+            rely = "true"
+
+        else:
+            rely = "false"
+
+        os.system(
+            f"sudo gnome-terminal -- ip netns exec server python3 tcp_test/server.py --packets {args.packets} --throughput {args.throughput} --rely {rely}"
         )
 
         os.system(
-            f"gnome-terminal -- ip netns exec server python3 tcp_test/server.py --packets {args.packets} --throughput {args.throughput} --rely {args.rely}"
+            f"sudo ip netns exec client python3 tcp_test/client.py --mode {args.mode} --packets {args.packets} --server-latency {args.server_latency} --client-latency {args.client_latency} --packet-loss {loss} --throughput {args.throughput} --rely {rely}"
         )
-
-        os.system(
-            f"ip netns exec client python3 tcp_test/client.py --mode {args.mode} --packets {args.packets} --server-latency {args.server_latency} --client-latency {args.client_latency} --packet-loss {loss} --throughput {args.throughput} --rely {args.rely}"
-        )
-
-        clean_up()
 
 
 if __name__ == "__main__":

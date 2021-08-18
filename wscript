@@ -35,10 +35,9 @@ def options(opt):
         default=1,
     )
     opt.add_option(
-        "--rely",
-        action="store_true",
-        help="A bool determining if rely is activated or not",
-        default="false",
+        "--rely-path",
+        help="The path to the Rely-app binary",
+        default=None,
     )
 
 
@@ -85,7 +84,7 @@ def run(ctx):
     server_latency = f"--server-latency {ctx.options.server_latency}"
     client_latency = f"--client-latency {ctx.options.client_latency}"
     throughput = f"--throughput {ctx.options.throughput}"
-    rely = f"--rely {ctx.options.rely}"
+    rely = f"--rely-path {ctx.options.rely_path}"
 
     venv = _create_venv(ctx)
 
