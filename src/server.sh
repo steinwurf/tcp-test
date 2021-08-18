@@ -41,4 +41,4 @@ while [ "$1" != "" ]; do
 done
 
 
-python3 server.py --tries $tries --throughput $throughput --rely "$rely"
+python3 ./src/server.py --tries $tries --throughput $throughput --rely "$rely"
