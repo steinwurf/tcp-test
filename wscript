@@ -13,6 +13,34 @@ VERSION = "0.0.0"
 def options(opt):
     pass
 
+    opt.add_option(
+        "--mode",
+        help="The mode for data collection. histogram or throughput",
+        default="histogram",
+    )
+    opt.add_option("--packets", help="The number of packet to receive", default=10000)
+    opt.add_option(
+        "--server-latency",
+        help="The delay from the server to the client in ms",
+        default=60,
+    )
+    opt.add_option(
+        "--client-latency",
+        help="The delay from the client to the server in ms",
+        default=60,
+    )
+    opt.add_option(
+        "--throughput",
+        help="The throughput from the server to the client in MB/s",
+        default=1,
+    )
+    opt.add_option(
+        "--rely",
+        action="store_true",
+        help="A bool determining if rely is activated or not",
+        default="false",
+    )
+
 
 def _create_venv(ctx):
 
@@ -50,8 +78,20 @@ def _create_venv(ctx):
     return venv
 
 
-def run_netns(ctx):
+def run(ctx):
+
+    mode = f"--mode {ctx.options.mode}"
+    packets = f"--packets {ctx.options.packets}"
+    server_latency = f"--server-latency {ctx.options.server_latency}"
+    client_latency = f"--client-latency {ctx.options.client_latency}"
+    throughput = f"--throughput {ctx.options.throughput}"
+    rely = f"--rely {ctx.options.rely}"
 
     venv = _create_venv(ctx)
 
-    venv.run("python3 tcp_test/simulator/tools/namespaces.py")
+    venv.run(
+        f"python3 tcp_test/main.py {mode} {packets} {server_latency} {client_latency} {throughput} {rely}"
+    )
+
+    if ctx.options.mode == "throughput":
+        venv.run(f"python3 tcp_test/plot_throughput.py {throughput}")

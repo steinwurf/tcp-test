@@ -1,3 +1,5 @@
 venv*
 .waf*
 build
+results/rely/**
+results/tcp/**

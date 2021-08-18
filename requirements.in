@@ -1,2 +1,4 @@
-pyroute2
-addict
+numpy
+pandas
+matplotlib
+seaborn
