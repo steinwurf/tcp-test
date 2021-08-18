@@ -2,6 +2,13 @@
 TCP Testing in Bash (Linux)
 ===========================
 
+Dependencies
+------------
+
+Set up a virtual environment and install all the dependencies with::
+
+    pip install -r requirements.txt
+
 Usage
 -----
 
