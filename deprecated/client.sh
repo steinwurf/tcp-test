@@ -87,4 +87,4 @@ while [ "$1" != "" ]; do
    shift
 done
 
-python3 client.py --mode "$mode" --tries $tries --server-latency $serverdelay --client-latency $clientdelay --packet-loss $packetloss --throughput $throughput --rely "$rely"
+python3 ./src/client.py --mode "$mode" --tries $tries --server-latency $serverdelay --client-latency $clientdelay --packet-loss $packetloss --throughput $throughput --rely "$rely"
