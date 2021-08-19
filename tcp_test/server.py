@@ -20,6 +20,7 @@ def server(packets, throughput, rely):
     TCP_PORT = 5000
     BUFFERSIZE = 100
     sock = socket.socket()
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     server_address = (TCP_IP, TCP_PORT)
 

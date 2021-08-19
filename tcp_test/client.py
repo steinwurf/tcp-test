@@ -128,6 +128,7 @@ def client(mode, packets, server_latency, client_latency, loss, throughput, rely
         )
 
     client = socket.socket()
+    client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     server_address = (server_ip, server_port)
     print(f"Connecting to (Server, Port): {server_address}")

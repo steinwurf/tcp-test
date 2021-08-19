@@ -53,7 +53,7 @@ def main():
             print(temp)
             results["Average Throughput / MB/s"].append(temp["Mean Throughput / MB/s"])
             results["Packet Loss / %"].append(temp["Packet Loss %"])
-            results["Rely"].append("ON")
+            results["Rely"].append("ON, (5,1)")
             results["Server Latency"].append(temp["Server Latency"])
             results["Client Latency"].append(temp["Client Latency"])
             results["Server Throughput"].append(temp["Server Throughput"])
@@ -69,16 +69,13 @@ def main():
         estimator=np.mean,
     )
     plt.title(
-        "TCP with and without Rely \n"
+        "TCP throughput \n"
         + f'Packets = {temp["Transfers"]}\n'
         + (
             f'Server Throughput = {temp["Server Throughput"]} MB/s\n'
             + (
                 f'S->C = {temp["Server Latency"]}ms\n'
-                + (
-                    f'C->S = {temp["Client Latency"]}ms\n'
-                    + "Rely Interval, Target = (10, 1)"
-                )
+                + (f'C->S = {temp["Client Latency"]}ms\n')
             )
         )
     )

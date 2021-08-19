@@ -3,3 +3,4 @@ venv*
 build
 results/rely/**
 results/tcp/**
+tcp_test/__pycache__
