@@ -19,4 +19,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Configure
-        run: ${{ env.python }} waf
+        run: ${{ env.python }} waf run
