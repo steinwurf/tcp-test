@@ -22,3 +22,25 @@ def setup():
 
 def clean_up():
     os.system("sudo ip netns delete client && sudo ip netns delete server")
+
+
+def rely_setup(rely_path):
+
+    os.system(
+        f"sudo ip netns exec server {rely_path} add tun --tunnel-in 10.0.0.1:5000 --tunnel-out 10.0.0.2:5000 --tun-ip 11.11.11.11"
+    )
+
+    os.system(f"sudo ip netns exec server {rely_path} tun0 start")
+
+    os.system(
+        f"sudo ip netns exec client {rely_path} add tun --tunnel-in 10.0.0.2:5000 --tunnel-out 10.0.0.1:5000 --tun-ip 11.11.11.22"
+    )
+
+    os.system(f"sudo ip netns exec client {rely_path} tun0 start")
+
+
+def rely_clean_up(rely_path):
+
+    os.system(f"sudo ip netns exec server {rely_path} terminate")
+
+    os.system(f"sudo ip netns exec client {rely_path} terminate")

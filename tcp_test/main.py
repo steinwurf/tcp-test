@@ -2,56 +2,75 @@ import argparse
 import atexit
 import os
 
-from setup import setup, clean_up
+from setup import setup, clean_up, rely_setup, rely_clean_up
 
 default_packet_losses = [i / 2 for i in range(0, 4)]
+
+repair_interval = 5
+repair_target = 1
+timeout = 60
+flush_repair = 0
 
 
 def test_session():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "-m",
         "--mode",
         type=str,
         help="The mode for data collection. histogram or throughput",
         default="histogram",
     )
     parser.add_argument(
-        "--packets", type=int, help="The number of packet to receive", default=10000
+        "-p",
+        "--packets",
+        type=int,
+        help="The number of packet to receive",
+        default=10000,
     )
     parser.add_argument(
+        "-sl",
         "--server-latency",
         type=int,
         help="The delay from the server to the client in ms",
         default=60,
     )
     parser.add_argument(
+        "-cl",
         "--client-latency",
         type=int,
         help="The delay from the client to the server in ms",
         default=60,
     )
     parser.add_argument(
+        "-tp",
         "--throughput",
         type=float,
         help="The throughput from the server to the client in MB/s",
         default=1,
     )
     parser.add_argument(
+        "-rely",
         "--rely-path",
-        type=str,
+        action="store",
         help="The path to the Rely-app binary",
-        default="",
     )
 
     args = parser.parse_args()
 
     atexit.register(clean_up)
 
+    if args.rely_path:
+        atexit.register(rely_clean_up, args.rely_path)
+
     for loss in default_packet_losses:
 
         if not loss == default_packet_losses[0]:
             clean_up()
+
+            if args.rely_path:
+                rely_clean_up(args.rely_path)
 
         setup()
 
@@ -63,12 +82,23 @@ def test_session():
         )
 
         if args.rely_path:
+
+            rely_setup(args.rely_path)
+
             os.system(
-                f"sudo gnome-terminal -- ip netns exec server {args.rely_path} tun --local_endpoint 10.0.0.1:5000 --remote_endpoint 10.0.0.2:5000 --tunnel_ip 11.11.11.11"
+                f"sudo ip netns exec server {args.rely_path} tun0 set_repair {repair_interval} {repair_target}"
             )
             os.system(
-                f"sudo gnome-terminal -- ip netns exec client {args.rely_path} tun --local_endpoint 10.0.0.2:5000 --remote_endpoint 10.0.0.1:5000 --tunnel_ip 11.11.11.22"
+                f"sudo ip netns exec server {args.rely_path} tun0 set_encoder_timeout {timeout}"
             )
+            os.system(
+                f"sudo ip netns exec server {args.rely_path} tun0 set_flush_repair {flush_repair}"
+            )
+
+            os.system(
+                f"sudo ip netns exec client {args.rely_path} tun0 set_decoder_timeout {timeout}"
+            )
+
             rely = "true"
 
         else:

@@ -18,7 +18,11 @@ def options(opt):
         help="The mode for data collection. histogram or throughput",
         default="histogram",
     )
-    opt.add_option("--packets", help="The number of packet to receive", default=10000)
+    opt.add_option(
+        "--packets",
+        help="The number of packet to receive",
+        default=10000,
+    )
     opt.add_option(
         "--server-latency",
         help="The delay from the server to the client in ms",
@@ -37,7 +41,7 @@ def options(opt):
     opt.add_option(
         "--rely-path",
         help="The path to the Rely-app binary",
-        default=None,
+        action="store",
     )
 
 
@@ -84,13 +88,16 @@ def run(ctx):
     server_latency = f"--server-latency {ctx.options.server_latency}"
     client_latency = f"--client-latency {ctx.options.client_latency}"
     throughput = f"--throughput {ctx.options.throughput}"
-    rely = f"--rely-path {ctx.options.rely_path}"
+
+    options = f"{mode} {packets} {server_latency} {client_latency} {throughput}"
+
+    if ctx.options.rely_path:
+        rely = f" --rely-path {ctx.options.rely_path}"
+        options += rely
 
     venv = _create_venv(ctx)
 
-    venv.run(
-        f"python3 tcp_test/main.py {mode} {packets} {server_latency} {client_latency} {throughput} {rely}"
-    )
+    venv.run(f"python3 tcp_test/main.py {options}")
 
     if ctx.options.mode == "throughput":
         venv.run(f"python3 tcp_test/plot_throughput.py {throughput}")

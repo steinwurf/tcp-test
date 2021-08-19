@@ -45,6 +45,8 @@ def latencies(
 
     labels = []
     labels.append(f"Rely = {rely_on}")
+    if rely_on:
+        labels.append("Repair rate = 16.6%")
     labels.append(f"Packets = {packets}")
     labels.append(f"Throughput = {throughput} MB/s")
     labels.append(f"Packet Loss = {packet_loss}%")
