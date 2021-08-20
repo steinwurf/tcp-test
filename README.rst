@@ -8,6 +8,9 @@ It runs a test that measures the latency added to each packet and returns plots 
 Reasoning
 ---------
 
+This repo was designed to satisfy our curiosity about the behaviour of TCP when experiencing packet losses.
+
+
 
 Technicalities
 --------------
