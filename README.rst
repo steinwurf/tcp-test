@@ -8,7 +8,14 @@ It runs a test that measures the latency added to each packet and returns plots 
 Reasoning
 ---------
 
-This repo was designed to satisfy our curiosity about the behaviour of TCP when experiencing packet losses.
+When TCP experiences a packet loss, it will attempt to retransmit the packet and block other packets from being sent until an acknowledgement (ACK) is received.
+This behaviour will add latency to not only the initially lost packet, but also the succesive packets until the protocol catches up.
+
+To test our FEC-library Rely, we wanted to set up a demo, where Rely is setup in a layer underneath the TCP in an attempt to fix the packet losses before TCP would otherwise act on them, and thus stop the connection from going out of hand.
+
+The TCP-mechanism described above is called `Nagle's Algorithm <https://en.wikipedia.org/wiki/Nagle%27s_algorithm>`_ and the reasoning for the blocking of successive packets is, that the packet loss is suspected to be due to congestion.
+
+Since this setup uses a Pseudo-random-number-generator (PRNG) for the packet losses and does not congest the channel, we have decided to turn Nagle's algorithm off in the TCP Stream.
 
 
 
