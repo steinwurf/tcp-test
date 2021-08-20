@@ -4,10 +4,10 @@ import time
 import atexit
 import json
 import os
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpl_patches
-from matplotlib.legend import Legend
 import argparse
 
 
@@ -34,11 +34,52 @@ def latencies(
     throughput: int,
     rely_on: bool,
 ):
+    latency_dict["packet_index"] = [
+        i for i in range(len(latency_dict["Added Latency / ms"]))
+    ]
     df = pd.DataFrame(latency_dict)
     print(df)
     plt.hist(x="Added Latency / ms", bins=100, data=df)
     plt.xlabel("Added Latency / ms")
     plt.ylabel("Count")
+    handles = [
+        mpl_patches.Rectangle((0, 10), 1, 1, fc="white", ec="white", lw=0, alpha=0)
+    ] * 6
+
+    mean_latency = np.mean(df["Added Latency / ms"])
+
+    labels = []
+    labels.append(f"Rely = {rely_on}")
+    if rely_on:
+        labels.append("Repair rate = 16.6%")
+    labels.append(f"Packets = {packets}")
+    labels.append(f"Throughput = {throughput} MB/s")
+    labels.append(f"Packet Loss = {packet_loss}%")
+    labels.append(f"S->C delay = {server_latency}ms")
+    labels.append(f"C->S delay = {client_latency}ms")
+    labels.append(f"Mean added latency = {mean_latency}")
+    plt.legend(
+        handles,
+        labels,
+        loc=0,
+        fontsize="small",
+        fancybox=True,
+        framealpha=0.7,
+        handlelength=0,
+        handletextpad=0,
+    )
+    plt.title(f"TCP Latency Histogram\n")
+    plt.show()
+
+    plt.plot(
+        "packet_index",
+        "Added Latency / ms",
+        "o",
+        data=df,
+    )
+
+    plt.xlabel("Packet Index")
+    plt.ylabel("Added Latency / ms")
     handles = [
         mpl_patches.Rectangle((0, 10), 1, 1, fc="white", ec="white", lw=0, alpha=0)
     ] * 6
@@ -52,6 +93,7 @@ def latencies(
     labels.append(f"Packet Loss = {packet_loss}%")
     labels.append(f"S->C delay = {server_latency}ms")
     labels.append(f"C->S delay = {client_latency}ms")
+    labels.append(f"Mean added latency = {mean_latency}")
     plt.legend(
         handles,
         labels,
@@ -62,7 +104,7 @@ def latencies(
         handlelength=0,
         handletextpad=0,
     )
-    plt.title(f"TCP Test\n")
+    plt.title(f"TCP Per-packet-latency\n")
     plt.show()
 
 

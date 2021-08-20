@@ -2,17 +2,27 @@
 TCP Testing (Linux)
 ====================
 
-This repo is Steinwurf's public TCP-testing python3 program, used to showcase the power of Rely utilized under a TCP stream.
+This repo is Steinwurf's public TCP-testing python3 program, used to showcase the power of Forward Erasure Correction (FEC) - more specifically our library Rely - utilized under a TCP stream.
+It runs a test that measures the latency added to each packet and returns plots to visualize this metric.
+
+Reasoning
+---------
+
+
+Technicalities
+--------------
 
 The script creates two network namespaces 'client' and 'server' and sets up two veths between them, adds delay and packet loss between them
 using the Linux "ip" command (requires Super-User privileges and thus password).
 
-The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up. The server then sends packets to the client
+The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up in Python3. The server then sends packets to the client
 and delay or throughput is measured on the client side.
 
-If the selected mode is histogram, the script returns a histogram plot after each test-case, e.g:
+If the selected mode is histogram, the script returns a added-latency-histogram plot and a packet-index vs added-latency plot after each test-case, e.g:
 
 .. image:: ./examples/tcp_hist.png
+
+.. image:: ./examples/tcp_scatter.png
 
 If this is run on a linux machine where the super-user command is not 'sudo' this must be altered in main.py and setup.py to the approriate setup.
 
