@@ -8,15 +8,15 @@ It runs a test that measures the latency added to each packet and returns plots 
 Reasoning
 ---------
 
-When TCP experiences a packet loss, it will attempt to retransmit the packet and block other packets from being sent until an acknowledgement (ACK) is received.
+When TCP experiences a packet loss, it will attempt to retransmit the packet and block other packets from being sent until an acknowledgement (ACK) is received. This is to ensure that the bytestream is received in order.
 This behaviour will add latency to not only the initially lost packet, but also the succesive packets until the protocol catches up.
 
 To test our FEC-library Rely, we wanted to set up a demo, where Rely is setup in a layer underneath the TCP in an attempt to fix the packet losses before TCP would otherwise act on them, and thus stop the connection from going out of hand.
 
-The TCP-mechanism described above is called `Nagle's Algorithm <https://en.wikipedia.org/wiki/Nagle%27s_algorithm>`_ and the reasoning for the blocking of successive packets is, that the packet loss is suspected to be due to congestion.
+The TCP also has a mechanism that holds back packets until it has a sufficient amount of data to send. This algorithm is called `Nagle's Algorithm <https://en.wikipedia.org/wiki/Nagle%27s_algorithm>`_ .
+Nagle's algorithm would add further unnecessary latency if the throughput of the stream is low. Therefore we have decided to turn Nagle's algorithm off in the TCP Stream. The algorithm could become optional in future versions.
 
-Since this setup uses a Pseudo-random-number-generator (PRNG) for the packet losses and does not congest the channel, we have decided to turn Nagle's algorithm off in the TCP Stream.
-
+For further details about TCP see the `Wikipedia Page <https://en.wikipedia.org/wiki/Transmission_Control_Protocol>`_
 
 
 Technicalities
@@ -25,7 +25,7 @@ Technicalities
 The script creates two network namespaces 'client' and 'server' and sets up two veths between them, adds delay and packet loss between them
 using the Linux "ip" command (requires Super-User privileges and thus password).
 
-The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up in Python3. The server then sends packets to the client
+The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up in Python3 with the TCP_NODELAY socket option (Turn of Nagle's algorithm). The server then timestamps, indexes and sends packets to the client
 and delay or throughput is measured on the client side.
 
 If the selected mode is histogram, the script returns a added-latency-histogram plot and a packet-index vs added-latency plot after each test-case, e.g:
