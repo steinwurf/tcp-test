@@ -2,17 +2,37 @@
 TCP Testing (Linux)
 ====================
 
-This repo is Steinwurf's public TCP-testing python3 program, used to showcase the power of Rely utilized under a TCP stream.
+This repo is Steinwurf's public TCP-testing python3 program, used to showcase the power of Forward Erasure Correction (FEC) - more specifically our library Rely - utilized under a TCP stream.
+It runs a test that measures the latency added to each packet and returns plots to visualize this metric.
+
+Reasoning
+---------
+
+When TCP experiences a packet loss, it will attempt to retransmit the packet and block other packets from being sent until an acknowledgement (ACK) is received. This is to ensure that the bytestream is received in order.
+This behaviour will add latency to not only the initially lost packet, but also the succesive packets until the protocol catches up.
+
+To test our FEC-library Rely, we wanted to set up a demo, where Rely is setup in a layer underneath the TCP in an attempt to fix the packet losses before TCP would otherwise act on them, and thus stop the connection from going out of hand.
+
+The TCP also has a mechanism that holds back packets until it has a sufficient amount of data to send. This algorithm is called `Nagle's Algorithm <https://en.wikipedia.org/wiki/Nagle%27s_algorithm>`_ .
+Nagle's algorithm would add further unnecessary latency if the throughput of the stream is low. Therefore we have decided to turn Nagle's algorithm off in the TCP Stream. The algorithm could become optional in future versions.
+
+For further details about TCP see the `Wikipedia Page <https://en.wikipedia.org/wiki/Transmission_Control_Protocol>`_
+
+
+Technicalities
+--------------
 
 The script creates two network namespaces 'client' and 'server' and sets up two veths between them, adds delay and packet loss between them
 using the Linux "ip" command (requires Super-User privileges and thus password).
 
-The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up. The server then sends packets to the client
+The server and client scripts are then run in separate terminals from each of their namespaces, and two TCP sockets are set up in Python3 with the TCP_NODELAY socket option (Turn of Nagle's algorithm). The server then timestamps, indexes and sends packets to the client
 and delay or throughput is measured on the client side.
 
-If the selected mode is histogram, the script returns a histogram plot after each test-case, e.g:
+If the selected mode is histogram, the script returns a added-latency-histogram plot and a packet-index vs added-latency plot after each test-case, e.g:
 
 .. image:: ./examples/tcp_hist.png
+
+.. image:: ./examples/tcp_scatter.png
 
 If this is run on a linux machine where the super-user command is not 'sudo' this must be altered in main.py and setup.py to the approriate setup.
 
