@@ -37,8 +37,6 @@ def run(client_socket, packets, packet_size, interval, log):
 
 def server(packets, throughput, server_ip, server_port, packet_size, log):
 
-    TCP_PORT = 5000
-    BUFFERSIZE = 100
     sock = socket.socket()
     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -56,14 +54,19 @@ def server(packets, throughput, server_ip, server_port, packet_size, log):
     log.info(f"Connection from {client_address}")
 
     # Receive hello from client
-    data = client_socket.recv(BUFFERSIZE).decode()
+    data = client_socket.recv(packet_size).decode()
     log.info(f"Got from client {data}")
 
     try:
         log.info("Running")
 
-        run(client_socket=client_socket, packets=packets,
-            packet_size=packet_size, interval=interval, log=log)
+        run(
+            client_socket=client_socket,
+            packets=packets,
+            packet_size=packet_size,
+            interval=interval,
+            log=log,
+        )
 
     finally:
 
@@ -75,13 +78,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--packets", type=int, help="The number of packet to receive",
-        default=10000
+        "--packets", type=int, help="The number of packet to receive", default=10000
     )
 
     parser.add_argument(
-        "--packet_size", type=int, help="The number of packet to receive",
-        default=1400
+        "--packet_size", type=int, help="The number of packet to receive", default=1400
     )
 
     parser.add_argument(
@@ -91,7 +92,7 @@ if __name__ == "__main__":
         default=1,
     )
 
-    log = logging.getLogger('server')
+    log = logging.getLogger("server")
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
 
@@ -100,6 +101,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    server(packets=args.packets, throughput=args.throughput,
-           packet_size=args.packet_size,
-           server_ip=server_ip, server_port=server_port, log=log)
+    server(
+        packets=args.packets,
+        throughput=args.throughput,
+        packet_size=args.packet_size,
+        server_ip=server_ip,
+        server_port=server_port,
+        log=log,
+    )
