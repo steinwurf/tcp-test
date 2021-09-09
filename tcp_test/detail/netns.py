@@ -8,7 +8,6 @@ class NetNS(object):
 
     def list(self):
         output = self.shell.run(cmd="ip netns list", cwd=None)
-
         names = []
 
         for line in output.splitlines():

@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import asyncio
 
 import detail.shell
 import detail.ip
@@ -41,8 +42,6 @@ def network(log):
 
     demo0.up(interface="lo")
     demo1.up(interface="lo")
-
-    print(demo0.run(cmd="ping 10.0.0.1 -c 5", cwd=None))
 
 
 if __name__ == "__main__":

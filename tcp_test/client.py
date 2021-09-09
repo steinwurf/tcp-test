@@ -3,9 +3,13 @@ import struct
 import time
 import argparse
 import logging
-from console_statistics import ConsoleStatistics
-from regular_statistics import PacketStatistics, JitterStatistics, LatencyStatistics
-from statistics_collector import StatisticsCollector
+from detail.console_statistics import ConsoleStatistics
+from detail.regular_statistics import (
+    PacketStatistics,
+    JitterStatistics,
+    LatencyStatistics,
+)
+from detail.statistics_collector import StatisticsCollector
 
 
 def client(server_ip, server_port, packet_size, statistics_collector, log):

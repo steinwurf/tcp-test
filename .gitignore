@@ -3,5 +3,5 @@ venv*
 build
 results/rely/**
 results/tcp/**
-tcp_test/__pycache__
+**/__pycache__
 coverage

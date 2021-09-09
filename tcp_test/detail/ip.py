@@ -1,3 +1,6 @@
+import re
+
+
 class IP(object):
     def __init__(self, shell):
         self.shell = shell
@@ -64,4 +67,3 @@ class IP(object):
             f"iptables -t nat -A POSTROUTING -s {ip} -o {interface} -j MASQUERADE",
             cwd=None,
         )
-
