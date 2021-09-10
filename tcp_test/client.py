@@ -3,6 +3,8 @@ import struct
 import time
 import argparse
 import logging
+import json
+import os
 from detail.console_statistics import ConsoleStatistics
 from detail.regular_statistics import (
     PacketStatistics,
@@ -51,6 +53,55 @@ def client(server_ip, server_port, packet_size, statistics_collector, log):
 
     client.close()
     log.info("Client stopped")
+
+    log.info("Gathering Results..")
+
+    results = {}
+
+    for collector in statistics_collector.collectors:
+
+        result = collector.statistics.result()
+        gather_results(results, result)
+
+    if os.path.exists("../results"):
+        path = "../results"
+
+    else:
+        raise RuntimeError(
+            "A folder named 'results' is not located in the root of the project"
+        )
+
+    log.info(f"Dumping json to {path}")
+
+    dump_json(results=results, path=path)
+
+    log.info(f"Test finished")
+
+
+def gather_results(results: dict, result: dict):
+    for key in result.keys():
+        results[key] = result[key]
+
+
+def filename(files: int, path):
+    return f"{path}/results{files}.json"
+
+
+def files(path):
+    files = 0
+    while os.path.exists(filename(files, path)):
+        files += 1
+    return files
+
+
+def dump_json(results: dict, path):
+    json_string = json.dumps(results, indent=4)
+    file_number = files(path=path)
+    file_name = filename(files=file_number, path=path)
+
+    f = open(file_name, "w")
+    f.write(json_string)
+    f.close()
 
 
 if __name__ == "__main__":

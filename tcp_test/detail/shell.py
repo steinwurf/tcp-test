@@ -22,34 +22,49 @@ class Shell(object):
         self.log.debug(cmd)
         return subprocess.check_output(cmd, shell=True, cwd=cwd, text=True)
 
-    async def run_async(self, cmd: str, is_daemon=False):
+    async def run_async(self, cmd: str, daemon=False, delay=0):
         """Run an asynchronous command.
         :param cmd: The command to run
         :param cwd: The current working directory i.e. where the command will
             run
         """
+        if delay > 0:
+            self.log.debug(f"Waiting {delay} seconds")
+            await asyncio.sleep(delay)
 
         if self.sudo:
             cmd = "sudo " + cmd
 
-        self.log.debug(cmd)
+        self.log.debug("Running " + cmd)
+
+        task = asyncio.current_task()
+        task.cmd = cmd
+        task.daemon = daemon
 
         proc = await asyncio.create_subprocess_shell(
-            cmd=cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
-        # One way of printing dynamically with async processes:
+
+        self.log.debug("Launched")
+
         try:
-            while True:
-                if is_daemon:
-                    # Just print whenever output is available
-                    line = await asyncio.wait_for(proc.stdout.readline(), None)
-                else:
-                    # Wait 10 seconds at most for a line
-                    line = await asyncio.wait_for(proc.stdout.readline(), 10)
+            stdout, stderr = await proc.communicate()
+        except asyncio.exceptions.CancelledError:
+            if daemon:
+                self.log.debug("Deamon shutting down")
+            else:
+                raise
 
-                print(line)
+        else:
 
-        except asyncio.TimeoutError as e:
-            print(f"The command '{cmd}' timed out")
+            self.log.debug(f"[{cmd!r} exited with {proc.returncode}]")
+            if stdout:
+                self.log.info(f"[stdout]\n{stdout.decode()}")
+            if stderr:
+                self.log.info(f"[stderr]\n{stderr.decode()}")
+
+            if daemon:
+                raise RuntimeError("Deamon exit prematurely")
+
+            if proc.returncode != 0:
+                raise RuntimeError(f"{cmd} failed with exit code {proc.returncode}")

@@ -1,7 +1,6 @@
 venv*
 .waf*
 build
-results/rely/**
-results/tcp/**
+results
 **/__pycache__
 coverage

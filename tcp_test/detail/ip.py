@@ -56,6 +56,35 @@ class IP(object):
     def run(self, cmd, cwd):
         return self.shell.run(cmd=cmd, cwd=cwd)
 
+    async def run_async(self, cmd, daemon=False, delay=0):
+        await self.shell.run_async(cmd=cmd, daemon=daemon, delay=delay)
+
+    def tc_show(self, interface, cwd=None):
+        return self.shell.run(cmd=f"tc qdisc show dev {interface}", cwd=cwd)
+
+    def tc(self, interface, delay=None, loss=None, cwd=None):
+        output = self.tc_show(interface=interface, cwd=cwd)
+        if "netem" in output:
+            action = "change"
+        else:
+            action = "add"
+        cmd = f"tc qdisc {action} dev {interface} root netem "
+        if delay:
+            cmd += f"delay {delay}ms "
+        if loss:
+            cmd += f"loss {loss}%"
+        self.shell.run(cmd=cmd, cwd=cwd)
+
+    def tc_loss(self, interface, loss, cwd=None):
+        output = self.tc_show(interface=interface, cwd=cwd)
+        if "netem" in output:
+            action = "change"
+        else:
+            action = "add"
+        self.shell.run(
+            cmd=f"tc qdisc {action} dev {interface} root netem loss {loss}%", cwd=cwd
+        )
+
     def forward(self, from_interface, to_interface):
         self.shell.run(
             f"iptables -A FORWARD -o {from_interface} -i {to_interface} -j ACCEPT",

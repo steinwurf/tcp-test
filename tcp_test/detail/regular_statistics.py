@@ -10,6 +10,13 @@ class PacketStatistics:
         self.bytes_received += bytes_received
         self.packets_received += 1
 
+    def result(self):
+        results = {
+            "packets_received": self.packets_received,
+            "bytes_received": self.bytes_received,
+        }
+        return results
+
     def __str__(self):
 
         return f"Packets = {self.packets_received}, Total Bytes = {self.bytes_received}"
@@ -60,6 +67,9 @@ class JitterStatistics:
 
         self.jitter.append(current_jitter)
 
+    def result(self):
+        return {"jitter": self.jitter}
+
     def __str__(self):
 
         return f"Jitter = {self.jitter[-1]} ms"
@@ -87,6 +97,9 @@ class LatencyStatistics:
     def calculate_latency(self):
 
         self.latency.append(self.client_time[-1] - self.server_time[-1])
+
+    def result(self):
+        return {"latency": self.latency}
 
     def __str__(self):
         return f"Latency = {self.latency[-1]} ms"
