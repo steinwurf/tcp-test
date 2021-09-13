@@ -86,6 +86,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--listen_ip",
+        type=str,
+        help="The IP address the server listens for connections to",
+        default="0.0.0.0",
+    )
+
+    parser.add_argument(
         "--throughput",
         type=float,
         help="The throughput from the server to the client in MB/s",
@@ -96,16 +103,15 @@ if __name__ == "__main__":
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
 
-    server_ip = "0.0.0.0"
-    server_port = 12345
-
     args = parser.parse_args()
+
+    server_port = 12345
 
     server(
         packets=args.packets,
         throughput=args.throughput,
         packet_size=args.packet_size,
-        server_ip=server_ip,
+        server_ip=args.listen_ip,
         server_port=server_port,
         log=log,
     )
