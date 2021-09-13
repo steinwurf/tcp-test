@@ -22,7 +22,7 @@ class Shell(object):
         self.log.debug(cmd)
         return subprocess.check_output(cmd, shell=True, cwd=cwd, text=True)
 
-    async def run_async(self, cmd: str, daemon=False, delay=0):
+    async def run_async(self, cmd: str, daemon=False, delay=0, cwd=None):
         """Run an asynchronous command.
         :param cmd: The command to run
         :param cwd: The current working directory i.e. where the command will
@@ -42,7 +42,7 @@ class Shell(object):
         task.daemon = daemon
 
         proc = await asyncio.create_subprocess_shell(
-            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=cwd
         )
 
         self.log.debug("Launched")

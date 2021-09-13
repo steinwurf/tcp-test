@@ -7,10 +7,3 @@ class StatisticsCollector:
         for collector in self.collectors:
             collector.add_result(server_time, client_time, bytes_received)
 
-    def report(self):
-        # If it is not time to report, then don't
-        if self.collectors[0].iterations % self.report_interval != 0:
-            return
-
-        for collector in self.collectors:
-            collector.report()

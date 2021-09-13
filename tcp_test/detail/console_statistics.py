@@ -1,8 +1,9 @@
 class ConsoleStatistics:
-    def __init__(self, log, statistics):
+    def __init__(self, log, statistics, report_interval=100):
         self.statistics = statistics
         self.log = log
         self.iterations = 0
+        self.report_interval = report_interval
 
     def add_result(self, server_time, client_time, bytes_received):
 
@@ -12,6 +13,6 @@ class ConsoleStatistics:
 
         self.iterations += 1
 
-    def report(self):
+        if (self.iterations % self.report_interval) == 0:
+            self.log.info(f"{self.statistics}")
 
-        self.log.info(f"{self.statistics}")

@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import asyncio
+import pathlib
 
 import detail.shell
 import detail.ip
@@ -9,7 +10,7 @@ import detail.netns
 
 
 def script_path():
-    return os.path.dirname(os.path.realpath(__file__))
+    return pathlib.Path(__file__).resolve().parent
 
 
 async def monitor():
@@ -33,7 +34,7 @@ async def monitor():
                 t.cancel()
 
 
-async def network(log):
+async def network(log, result_path):
 
     shell = detail.shell.Shell(log=log, sudo=True)
 
@@ -65,14 +66,22 @@ async def network(log):
     demo1.up(interface="lo")
 
     demo0.tc(interface="demo0-eth", delay=20, loss=1)
-    print(demo0.tc_show(interface="demo0-eth"))
     demo1.tc(interface="demo1-eth", delay=20, loss=1)
-    print(demo1.tc_show(interface="demo1-eth"))
+
+    log.debug(demo0.tc_show(interface="demo0-eth"))
+    log.debug(demo1.tc_show(interface="demo1-eth"))
 
     try:
+        # The location of the scripts
+
         await asyncio.gather(
-            demo0.run_async("python3 server.py --packets 1000"),
-            demo1.run_async("python3 client.py --server_ip 10.0.0.1", delay=2),
+            demo0.run_async("python3 server.py --packets 1000", cwd=script_path()),
+            demo1.run_async(
+                f"python3 client.py --server_ip 10.0.0.1 --clock-sync "
+                f"--result_path={result_path.resolve()}",
+                delay=2,
+                cwd=script_path(),
+            ),
             monitor(),
         )
     except asyncio.exceptions.CancelledError:
@@ -94,6 +103,10 @@ if __name__ == "__main__":
         "--packet_size", type=int, help="The number of packet to receive", default=1400
     )
 
+    parser.add_argument(
+        "--result_path", type=str, help="The path to the results", default="result.json"
+    )
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
@@ -104,4 +117,4 @@ if __name__ == "__main__":
     else:
         log.setLevel(logging.INFO)
 
-    asyncio.run(network(log=log))
+    asyncio.run(network(log=log, result_path=pathlib.Path(args.result_path)))

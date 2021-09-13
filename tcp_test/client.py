@@ -1,3 +1,4 @@
+import pathlib
 import socket
 import struct
 import time
@@ -14,7 +15,7 @@ from detail.regular_statistics import (
 from detail.statistics_collector import StatisticsCollector
 
 
-def client(server_ip, server_port, packet_size, statistics_collector, log):
+def client(server_ip, server_port, packet_size, statistics_collector, result_path, log):
 
     client = socket.socket()
     client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -44,12 +45,11 @@ def client(server_ip, server_port, packet_size, statistics_collector, log):
         log.debug(f"Got from server {len(data)} bytes")
 
         server_time = struct.unpack_from("<Q", data, 0)[0]
-        client_time = int(time.time_ns() / 1000000)
+        client_time = int(time.time_ns() / 1_000_000)
 
         statistics_collector.add_result(
             server_time=server_time, client_time=client_time, bytes_received=len(data)
         )
-        statistics_collector.report()
 
     client.close()
     log.info("Client stopped")
@@ -63,63 +63,37 @@ def client(server_ip, server_port, packet_size, statistics_collector, log):
         result = collector.statistics.result()
         gather_results(results, result)
 
-    if os.path.exists("../results"):
-        path = "../results"
+    log.info(f"Dumping json to {result_path}")
 
-    else:
-        raise RuntimeError(
-            "A folder named 'results' is not located in the root of the project"
-        )
-
-    log.info(f"Dumping json to {path}")
-
-    dump_json(results=results, path=path)
+    dump_json(results=results, path=result_path)
 
     log.info(f"Test finished")
 
 
 def gather_results(results: dict, result: dict):
     for key in result.keys():
+
+        if key in results:
+            raise KeyError(f"Overlapping key: {key}. Would overwrite.")
+
         results[key] = result[key]
-
-
-def filename(files: int, path):
-    return f"{path}/results{files}.json"
-
-
-def files(path):
-    files = 0
-    while os.path.exists(filename(files, path)):
-        files += 1
-    return files
 
 
 def dump_json(results: dict, path):
     json_string = json.dumps(results, indent=4)
-    file_number = files(path=path)
-    file_name = filename(files=file_number, path=path)
 
-    f = open(file_name, "w")
-    f.write(json_string)
-    f.close()
+    with open(path, "w") as f:
+        f.write(json_string)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--server_ip",
-        type=str,
-        help="Server IP address",
-        default="127.0.0.1",
+        "--server_ip", type=str, help="Server IP address", default="127.0.0.1"
     )
 
-    parser.add_argument(
-        "--server_port",
-        type=int,
-        help="Server port",
-        default=12345,
-    )
+    parser.add_argument("--server_port", type=int, help="Server port", default=12345)
 
     parser.add_argument(
         "--verbose", action="store_true", help="Server port", default=False
@@ -136,6 +110,10 @@ if __name__ == "__main__":
         default=False,
     )
 
+    parser.add_argument(
+        "--result_path", type=str, help="The path to the results", default="result.json"
+    )
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
@@ -149,17 +127,23 @@ if __name__ == "__main__":
     report_interval = 100
 
     packet_statistics = PacketStatistics(log=log)
-    packet_console = ConsoleStatistics(log=log, statistics=packet_statistics)
+    packet_console = ConsoleStatistics(
+        log=log, statistics=packet_statistics, report_interval=report_interval
+    )
 
     jitter_statistics = JitterStatistics(log=log)
-    jitter_console = ConsoleStatistics(log=log, statistics=jitter_statistics)
+    jitter_console = ConsoleStatistics(
+        log=log, statistics=jitter_statistics, report_interval=report_interval
+    )
 
     collectors = [packet_console, jitter_console]
 
     if args.clock_sync:
 
         latency_statistics = LatencyStatistics(log=log)
-        latency_console = ConsoleStatistics(log=log, statistics=latency_statistics)
+        latency_console = ConsoleStatistics(
+            log=log, statistics=latency_statistics, report_interval=report_interval
+        )
         collectors.append(latency_console)
 
     statistics_collector = StatisticsCollector(
@@ -173,6 +157,7 @@ if __name__ == "__main__":
         server_ip=args.server_ip,
         packet_size=args.packet_size,
         statistics_collector=statistics_collector,
+        result_path=pathlib.Path(args.result_path),
         log=log,
     )
 

@@ -56,8 +56,8 @@ class IP(object):
     def run(self, cmd, cwd):
         return self.shell.run(cmd=cmd, cwd=cwd)
 
-    async def run_async(self, cmd, daemon=False, delay=0):
-        await self.shell.run_async(cmd=cmd, daemon=daemon, delay=delay)
+    async def run_async(self, cmd, daemon=False, delay=0, cwd=None):
+        await self.shell.run_async(cmd=cmd, daemon=daemon, delay=delay, cwd=cwd)
 
     def tc_show(self, interface, cwd=None):
         return self.shell.run(cmd=f"tc qdisc show dev {interface}", cwd=cwd)
