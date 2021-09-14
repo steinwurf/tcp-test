@@ -14,7 +14,7 @@ def script_path():
     return pathlib.Path(__file__).resolve().parent
 
 
-async def monitor():
+async def monitor(log):
 
     while True:
         await asyncio.sleep(1)
@@ -31,6 +31,7 @@ async def monitor():
                 pass
 
         if not keep_running:
+            log.debug("Cancelling tasks")
             for t in tasks:
                 t.cancel()
 
@@ -40,18 +41,16 @@ async def network(
     packets,
     packet_size,
     throughput,
-    server_ip,
-    server_port,
     result_path,
+    verbose,
     rely_path,
     repair_interval,
     repair_target,
     timeout,
 ):
 
+    server_port = 12345
     server_ip = "10.0.0.1"
-    client_ip = "10.0.0.2"
-    listen_ip = "0.0.0.0"
 
     shell = detail.shell.Shell(log=log, sudo=True)
 
@@ -73,8 +72,8 @@ async def network(
     ip.link_set(namespace="demo0", interface="demo0-eth")
     ip.link_set(namespace="demo1", interface="demo1-eth")
 
-    demo0.addr_add(ip=f"{server_ip}/24", interface="demo0-eth")
-    demo1.addr_add(ip=f"{client_ip}/24", interface="demo1-eth")
+    demo0.addr_add(ip=f"10.0.0.1/24", interface="demo0-eth")
+    demo1.addr_add(ip=f"10.0.0.2/24", interface="demo1-eth")
 
     demo0.up(interface="demo0-eth")
     demo1.up(interface="demo1-eth")
@@ -134,24 +133,24 @@ async def network(
 
         rely_tunnel1.set_decoder_timeout(name="demo1-tun", timeout=timeout)
 
-        listen_ip = "11.11.11.11"
+        server_ip = "11.11.11.11"
 
     try:
         # The location of the scripts
 
         await asyncio.gather(
             demo0.run_async(
-                f"python3 server.py --packets {packets} --packet_size {packet_size} --listen_ip {listen_ip} --throughput {throughput}",
+                f"python3 server.py --packets {packets} --packet_size {packet_size} --server_ip {server_ip} --server_port {server_port} --throughput {throughput}",
                 delay=2,
                 cwd=script_path(),
             ),
             demo1.run_async(
                 f"python3 client.py --server_ip {server_ip} --server_port {server_port} --packet_size {packet_size} --clock-sync "
-                f"--result_path={result_path.resolve()}",
+                f"--result_path={result_path.resolve()} {verbose}",
                 delay=4,
                 cwd=script_path(),
             ),
-            monitor(),
+            monitor(log=log),
         )
     except asyncio.exceptions.CancelledError:
         pass
@@ -165,12 +164,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--server_ip", type=str, help="Server IP address", default="10.0.0.1"
-    )
-
-    parser.add_argument("--server_port", type=int, help="Server port", default=24)
-
-    parser.add_argument(
         "--throughput",
         type=float,
         help="The throughput from the server to the client in MB/s",
@@ -178,7 +171,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--verbose", action="store_true", help="Server port", default=False
+        "--verbose", action="store_true", help="Get debug info", default=False
     )
 
     parser.add_argument(
@@ -220,8 +213,16 @@ if __name__ == "__main__":
 
     if args.verbose:
         log.setLevel(logging.DEBUG)
+        verbose = "--verbose"
     else:
         log.setLevel(logging.INFO)
+        verbose = None
+
+    if args.rely_path:
+        rely_path = pathlib.Path(args.rely_path).resolve()
+
+    else:
+        rely_path = None
 
     asyncio.run(
         network(
@@ -229,10 +230,9 @@ if __name__ == "__main__":
             packets=args.packets,
             packet_size=args.packet_size,
             throughput=args.throughput,
-            server_ip=args.server_ip,
-            server_port=args.server_port,
             result_path=pathlib.Path(args.result_path),
-            rely_path=pathlib.Path(args.rely_path).resolve(),
+            verbose=verbose,
+            rely_path=rely_path,
             repair_interval=args.repair_interval,
             repair_target=args.repair_target,
             timeout=args.timeout,

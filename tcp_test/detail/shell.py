@@ -28,6 +28,10 @@ class Shell(object):
         :param cwd: The current working directory i.e. where the command will
             run
         """
+        task = asyncio.current_task()
+        task.cmd = cmd
+        task.daemon = daemon
+
         if delay > 0:
             self.log.debug(f"Waiting {delay} seconds")
             await asyncio.sleep(delay)
@@ -36,10 +40,6 @@ class Shell(object):
             cmd = "sudo " + cmd
 
         self.log.debug("Running " + cmd)
-
-        task = asyncio.current_task()
-        task.cmd = cmd
-        task.daemon = daemon
 
         proc = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=cwd

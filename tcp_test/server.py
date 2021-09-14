@@ -86,11 +86,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--listen_ip",
+        "--server_ip",
         type=str,
         help="The IP address the server listens for connections to",
         default="0.0.0.0",
     )
+    parser.add_argument("--server_port", type=int, help="Server port", default=12345)
 
     parser.add_argument(
         "--throughput",
@@ -105,13 +106,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    server_port = 12345
-
     server(
         packets=args.packets,
         throughput=args.throughput,
         packet_size=args.packet_size,
-        server_ip=args.listen_ip,
-        server_port=server_port,
+        server_ip=args.server_ip,
+        server_port=args.server_port,
         log=log,
     )
