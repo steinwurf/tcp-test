@@ -45,7 +45,7 @@ Standalone client/server test
 The client / server pair can be run on two different machines, where jitter can
 be recorded. If there is clock synchronization between the machines, latency can
 also be recorded. The client and server scripts sets up two TCP sockets in
-Python3 with the TCP_NODELAY socket option (Turn of Nagle's algorithm). The
+Python3 with the TCP_NODELAY socket option (Turn off Nagle's algorithm). The
 server then timestamps, indexes and sends packets to the client
 and jitter (and latency if clocks are in sync) is measured on the client side,
 and dumped to a json file. The location of the dump can be parsed with the
