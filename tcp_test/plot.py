@@ -28,7 +28,12 @@ def plot(log, json_path, plot_path):
     log.debug("Jitter Histogram")
 
     jitter_hist = df.plot(
-        y="jitter", xlabel="Jitter / ms", ylabel="Count", kind="hist", grid=True
+        y="jitter",
+        xlabel="Jitter / ms",
+        ylabel="Count",
+        kind="hist",
+        title="Jitter Histogram",
+        grid=True,
     ).get_figure()
     jitter_hist.savefig(plot_path / "jitter_hist.png")
     jitter_hist.savefig(plot_path / "jitter_hist.svg")
@@ -40,6 +45,7 @@ def plot(log, json_path, plot_path):
         xlabel="Packet index",
         ylabel="Jitter / ms",
         kind="scatter",
+        title="Jitter Scatter",
         grid=True,
     ).get_figure()
 
@@ -53,6 +59,7 @@ def plot(log, json_path, plot_path):
         xlabel="Packet index",
         ylabel="Jitter / ms",
         kind="line",
+        title="Jitter Line",
         grid=True,
     ).get_figure()
 
@@ -72,6 +79,7 @@ def plot(log, json_path, plot_path):
             xlabel="Added latency / ms",
             ylabel="Count",
             kind="hist",
+            title="Latency Histogram",
             grid=True,
         ).get_figure()
         latency_hist.savefig(plot_path / "latency_hist.png")
@@ -85,6 +93,7 @@ def plot(log, json_path, plot_path):
             xlabel="Packet index",
             ylabel="Added latency / ms",
             kind="scatter",
+            title="Latency Scatter",
             grid=True,
         ).get_figure()
 
@@ -99,6 +108,7 @@ def plot(log, json_path, plot_path):
             xlabel="Packet index",
             ylabel="Added latency / ms",
             kind="line",
+            title="Latency Line",
             grid=True,
         ).get_figure()
 

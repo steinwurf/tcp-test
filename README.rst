@@ -84,7 +84,7 @@ They will look like so:
 
 .. image:: ./examples/jitter_hist.png
 
-.. image:: ./examples/jitter_line.png
+.. image:: ./examples/latency_scatter.png
 
 
 
