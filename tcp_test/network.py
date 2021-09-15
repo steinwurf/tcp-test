@@ -3,6 +3,7 @@ import logging
 import os
 import asyncio
 import pathlib
+import time
 
 import detail.shell
 import detail.ip
@@ -88,6 +89,9 @@ async def network(
     log.debug(demo1.tc_show(interface="demo1-eth"))
 
     if rely_path:
+
+        log.debug("Starting Rely Daemon Servers...")
+
         rely_tunnel0 = detail.rely_tunnel.RelyTunnel(
             shell=demo0.shell,
             rely_path=rely_path,
@@ -97,41 +101,56 @@ async def network(
             rely_path=rely_path,
         )
 
+        rely_tunnel0.init()
+        rely_tunnel1.init()
+
+        log.debug("Servers init'ed")
+
+        time.sleep(2)
+
+        log.debug("Adding and starting tunnels")
+
         rely_tunnel0.start_tunnel(
-            name="demo0-tun",
+            id="demo0tun",
             tunnel_ip="11.11.11.11",
             tunnel_in=f"{server_ip}:12345",
-            tunnel_out=f"{client_ip}:12345",
+            tunnel_out=f"10.0.0.2:12345",
             packet_size=packet_size,
         )
 
         rely_tunnel1.start_tunnel(
-            name="demo1-tun",
+            id="demo1tun",
             tunnel_ip="11.11.11.22",
-            tunnel_in=f"{client_ip}:12345",
+            tunnel_in=f"10.0.0.2:12345",
             tunnel_out=f"{server_ip}:12345",
             packet_size=packet_size,
         )
 
+        log.debug(
+            f"Setting Repair Interval = {repair_interval}, Repair Target = {repair_target}"
+        )
+
         rely_tunnel0.set_repair(
-            name="demo0-tun",
+            id="demo0tun",
             repair_interval=repair_interval,
             repair_target=repair_target,
         )
 
         rely_tunnel1.set_repair(
-            name="demo1-tun",
+            id="demo1tun",
             repair_interval=repair_interval,
             repair_target=repair_target,
         )
 
-        rely_tunnel0.set_encoder_timeout(name="demo0-tun", timeout=timeout)
+        log.debug(f"Setting Encoder/Decoder timeout = {timeout}")
 
-        rely_tunnel1.set_encoder_timeout(name="demo1-tun", timeout=timeout)
+        rely_tunnel0.set_encoder_timeout(id="demo0tun", timeout=timeout)
 
-        rely_tunnel0.set_decoder_timeout(name="demo0-tun", timeout=timeout)
+        rely_tunnel1.set_encoder_timeout(id="demo1tun", timeout=timeout)
 
-        rely_tunnel1.set_decoder_timeout(name="demo1-tun", timeout=timeout)
+        rely_tunnel0.set_decoder_timeout(id="demo0tun", timeout=timeout)
+
+        rely_tunnel1.set_decoder_timeout(id="demo1tun", timeout=timeout)
 
         server_ip = "11.11.11.11"
 
@@ -152,6 +171,7 @@ async def network(
             ),
             monitor(log=log),
         )
+
     except asyncio.exceptions.CancelledError:
         pass
 
@@ -183,7 +203,10 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--rely_path", type=str, help="The path to the rely_app binary", default=None
+        "--rely_path",
+        type=str,
+        help="The path to the rely_app binary",
+        default=None,
     )
 
     parser.add_argument(
@@ -216,7 +239,7 @@ if __name__ == "__main__":
         verbose = "--verbose"
     else:
         log.setLevel(logging.INFO)
-        verbose = None
+        verbose = ""
 
     if args.rely_path:
         rely_path = pathlib.Path(args.rely_path).resolve()
