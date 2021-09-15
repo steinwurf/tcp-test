@@ -69,7 +69,8 @@ Rely-tunnels on two machines, you can set up two tunnels in each direction
 server scripts from the command line.
 
 If you want to run the network namespace setup through Rely-tunnels you can
-parse the path the the rely-app binary to network.py with the --rely_path option.
+parse the path the the rely-app binary to network.py with the --rely_path option
+and the Rely setup is done automatically.
 
 Plotting
 --------
