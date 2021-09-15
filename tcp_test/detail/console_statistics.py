@@ -15,4 +15,3 @@ class ConsoleStatistics:
 
         if (self.iterations % self.report_interval) == 0:
             self.log.info(f"{self.statistics}")
-

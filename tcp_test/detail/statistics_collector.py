@@ -6,4 +6,3 @@ class StatisticsCollector:
     def add_result(self, server_time, client_time, bytes_received):
         for collector in self.collectors:
             collector.add_result(server_time, client_time, bytes_received)
-
