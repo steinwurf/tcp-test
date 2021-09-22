@@ -1,11 +1,12 @@
 import pandas
+import matplotlib.pyplot as plt
 import argparse
 import logging
 import pathlib
 import json
 
 
-def plot(log, json_path, plot_path):
+def plot(log, json_path, plot_path, rely):
 
     log.info(f"Gathering results from {json_path}")
 
@@ -27,44 +28,64 @@ def plot(log, json_path, plot_path):
 
     log.debug("Jitter Histogram")
 
-    jitter_hist = df.plot(
-        y="jitter",
-        xlabel="Jitter / ms",
-        ylabel="Count",
-        kind="hist",
-        title="Jitter Histogram",
-        grid=True,
-    ).get_figure()
-    jitter_hist.savefig(plot_path / "jitter_hist.png")
-    jitter_hist.savefig(plot_path / "jitter_hist.svg")
+    label = ""
+
+    if rely:
+        label = "Rely"
+    else:
+        label = "TCP"
+
+    plt.hist(
+        df["jitter"],
+        bins=100,
+        label=label,
+    )
+    plt.legend(loc="upper right")
+    plt.xlabel("Jitter / ms")
+    plt.ylabel("Count")
+    plt.title("Jitter Histogram")
+    plt.grid(True)
+
+    plt.savefig(plot_path / "jitter_hist.png")
+    plt.savefig(plot_path / "jitter_hist.svg")
+
+    plt.close()
 
     log.debug("Jitter Scatter")
-    jitter_scatter = df.plot(
-        x="packet_index",
-        y="jitter",
-        xlabel="Packet index",
-        ylabel="Jitter / ms",
-        kind="scatter",
-        title="Jitter Scatter",
-        grid=True,
-    ).get_figure()
+    plt.scatter(
+        df["packet_index"],
+        df["jitter"],
+        s=10,
+        label=label,
+    )
+    plt.legend(loc="upper right")
+    plt.ylabel("Jitter / ms")
+    plt.xlabel("Packet Index")
+    plt.title("Jitter vs Packet Index")
+    plt.grid(True)
 
-    jitter_scatter.savefig(plot_path / "jitter_scatter.png")
-    jitter_scatter.savefig(plot_path / "jitter_scatter.svg")
+    plt.savefig(plot_path / "jitter_scatter.png")
+    plt.savefig(plot_path / "jitter_scatter.svg")
+
+    plt.close()
 
     log.debug("Jitter Line")
-    jitter_line = df.plot(
-        x="packet_index",
-        y="jitter",
-        xlabel="Packet index",
-        ylabel="Jitter / ms",
-        kind="line",
-        title="Jitter Line",
-        grid=True,
-    ).get_figure()
+    plt.plot(
+        df["packet_index"],
+        df["jitter"],
+        linewidth=1,
+        label=label,
+    )
+    plt.legend(loc="upper right")
+    plt.ylabel("Jitter / ms")
+    plt.xlabel("Packet Index")
+    plt.title("Jitter vs Packet Index")
+    plt.grid(True)
 
-    jitter_line.savefig(plot_path / "jitter_line.png")
-    jitter_line.savefig(plot_path / "jitter_line.svg")
+    plt.savefig(plot_path / "jitter_line.png")
+    plt.savefig(plot_path / "jitter_line.svg")
+
+    plt.close()
 
     log.info("Jitter: Done!")
 
@@ -74,46 +95,59 @@ def plot(log, json_path, plot_path):
 
         log.debug("Latency Histogram")
 
-        latency_hist = df.plot(
-            y="latency",
-            xlabel="Added latency / ms",
-            ylabel="Count",
-            kind="hist",
-            title="Latency Histogram",
-            grid=True,
-        ).get_figure()
-        latency_hist.savefig(plot_path / "latency_hist.png")
-        latency_hist.savefig(plot_path / "latency_hist.svg")
+        plt.hist(
+            df["latency"],
+            bins=100,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.xlabel("Latency / ms")
+        plt.ylabel("Count")
+        plt.title("Latency Histogram")
+        plt.grid(True)
+
+        plt.savefig(plot_path / "latency_hist.png")
+        plt.savefig(plot_path / "latency_hist.svg")
+
+        plt.close()
 
         log.debug("Latency Scatter")
 
-        latency_scatter = df.plot(
-            x="packet_index",
-            y="latency",
-            xlabel="Packet index",
-            ylabel="Added latency / ms",
-            kind="scatter",
-            title="Latency Scatter",
-            grid=True,
-        ).get_figure()
+        plt.scatter(
+            df["packet_index"],
+            df["latency"],
+            s=10,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.ylabel("Latency / ms")
+        plt.xlabel("Packet Index")
+        plt.title("Latency vs Packet Index")
+        plt.grid(True)
 
-        latency_scatter.savefig(plot_path / "latency_scatter.png")
-        latency_scatter.savefig(plot_path / "latency_scatter.svg")
+        plt.savefig(plot_path / "latency_scatter.png")
+        plt.savefig(plot_path / "latency_scatter.svg")
+
+        plt.close()
 
         log.debug("Latency Line")
 
-        latency_line = df.plot(
-            x="packet_index",
-            y="latency",
-            xlabel="Packet index",
-            ylabel="Added latency / ms",
-            kind="line",
-            title="Latency Line",
-            grid=True,
-        ).get_figure()
+        plt.plot(
+            df["packet_index"],
+            df["latency"],
+            linewidth=1,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.ylabel("Latency / ms")
+        plt.xlabel("Packet Index")
+        plt.title("Latency vs Packet Index")
+        plt.grid(True)
 
-        latency_line.savefig(plot_path / "latency_line.png")
-        latency_line.savefig(plot_path / "latency_line.svg")
+        plt.savefig(plot_path / "latency_line.png")
+        plt.savefig(plot_path / "latency_line.svg")
+
+        plt.close()
 
         log.info("Latency: Done!")
 
@@ -141,6 +175,13 @@ if __name__ == "__main__":
         "--verbose", action="store_true", help="Get debug information", default=False
     )
 
+    parser.add_argument(
+        "--rely",
+        action="store_true",
+        help="If the results are with rely or not",
+        default=False,
+    )
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
@@ -154,4 +195,4 @@ if __name__ == "__main__":
     json_path = pathlib.Path(args.json_path).resolve()
     plot_path = pathlib.Path(args.plot_path).resolve()
 
-    plot(log=log, json_path=json_path, plot_path=plot_path)
+    plot(log=log, json_path=json_path, plot_path=plot_path, rely=args.rely)
