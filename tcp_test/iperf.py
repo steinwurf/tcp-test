@@ -44,7 +44,6 @@ async def iperf(
     packet_size,
     throughput,
     result_path,
-    verbose,
     rely_path,
     repair_interval,
     repair_target,
@@ -163,13 +162,13 @@ async def iperf(
 
         await asyncio.gather(
             iperf_server.run_async(
-                f"-s --json --logfile {result_path}",
+                f"--server --json --logfile {result_path} --interval 1",
                 delay=2,
                 cwd=script_path(),
                 daemon=True,
             ),
             iperf_client.run_async(
-                f"-c {server_ip} -b {throughput} -k {packets} -l {packet_size} -n -o 2",
+                f"--client {server_ip} --bandwidth {throughput} --blockcount {packets} --length {packet_size} --no-delay --omit 2",
                 delay=4,
                 cwd=script_path(),
             ),
@@ -258,7 +257,6 @@ if __name__ == "__main__":
             packet_size=args.packet_size,
             throughput=args.throughput,
             result_path=pathlib.Path(args.result_path),
-            verbose=verbose,
             rely_path=rely_path,
             repair_interval=args.repair_interval,
             repair_target=args.repair_target,
