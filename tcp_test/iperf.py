@@ -85,8 +85,8 @@ async def iperf(
     demo0.up(interface="lo")
     demo1.up(interface="lo")
 
-    demo0.tc(interface="demo0-eth", delay=20, loss=5)
-    demo1.tc(interface="demo1-eth", delay=20, loss=5)
+    demo0.tc(interface="demo0-eth", delay=20, loss=1)
+    demo1.tc(interface="demo1-eth", delay=20, loss=1)
 
     log.debug(demo0.tc_show(interface="demo0-eth"))
     log.debug(demo1.tc_show(interface="demo1-eth"))
@@ -168,7 +168,7 @@ async def iperf(
                 daemon=True,
             ),
             iperf_client.run_async(
-                f"--client {server_ip} --bandwidth {throughput} --blockcount {packets} --length {packet_size} --no-delay --omit 2",
+                f"--client {server_ip} --bandwidth {throughput} --blockcount {packets} --length {packet_size} --no-delay",
                 delay=4,
                 cwd=script_path(),
             ),
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--packets", type=int, help="The number of packet to receive", default=10000
+        "--packets", type=int, help="The number of packet to receive", default=50000
     )
 
     parser.add_argument(
@@ -216,7 +216,7 @@ if __name__ == "__main__":
         "--repair_interval",
         type=int,
         help="The distance in packets between each generation of repair",
-        default=4,
+        default=10,
     )
     parser.add_argument(
         "--repair_target",

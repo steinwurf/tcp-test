@@ -15,143 +15,190 @@ def plot(log, json_path, plot_path, rely):
         log.debug("Loading json")
         results = json.loads(f.read())
 
-    total_packets = results["packets_received"]
+    if "start" in results.keys():
 
-    del results["bytes_received"]
-    del results["packets_received"]
+        log.info(f"Plotting iperf3 results")
+        fixed_keys = ["end", "bits_per_second"]
 
-    results["packet_index"] = [i for i in range(total_packets)]
+        target_bitrate = round(results["start"]["target_bitrate"] / (1000 * 1000))
 
-    df = pandas.DataFrame(results)
+        results = results["intervals"]
 
-    log.info("Jitter: Plotting..")
+        intervals = []
+        bitrates = []
 
-    log.debug("Jitter Histogram")
+        for dict in results[:-1]:
+            if dict["streams"][0]["omitted"]:
+                continue
+            intervals.append(round(dict["streams"][0]["start"]))
+            bitrates.append(dict["streams"][0]["bits_per_second"] / (1000 * 1000))
 
-    label = ""
+        results = {"time": intervals, "mbitrate": bitrates}
 
-    if rely:
-        label = "Rely"
-    else:
-        label = "TCP"
+        df = pandas.DataFrame(results)
 
-    plt.hist(
-        df["jitter"],
-        bins=100,
-        label=label,
-    )
-    plt.legend(loc="upper right")
-    plt.xlabel("Jitter / ms")
-    plt.ylabel("Count")
-    plt.title("Jitter Histogram")
-    plt.grid(True)
+        if rely:
+            label = "Rely"
+        else:
+            label = "TCP"
 
-    plt.savefig(plot_path / "jitter_hist.png")
-    plt.savefig(plot_path / "jitter_hist.svg")
-
-    plt.close()
-
-    log.debug("Jitter Scatter")
-    plt.scatter(
-        df["packet_index"],
-        df["jitter"],
-        s=10,
-        label=label,
-    )
-    plt.legend(loc="upper right")
-    plt.ylabel("Jitter / ms")
-    plt.xlabel("Packet Index")
-    plt.title("Jitter vs Packet Index")
-    plt.grid(True)
-
-    plt.savefig(plot_path / "jitter_scatter.png")
-    plt.savefig(plot_path / "jitter_scatter.svg")
-
-    plt.close()
-
-    log.debug("Jitter Line")
-    plt.plot(
-        df["packet_index"],
-        df["jitter"],
-        linewidth=1,
-        label=label,
-    )
-    plt.legend(loc="upper right")
-    plt.ylabel("Jitter / ms")
-    plt.xlabel("Packet Index")
-    plt.title("Jitter vs Packet Index")
-    plt.grid(True)
-
-    plt.savefig(plot_path / "jitter_line.png")
-    plt.savefig(plot_path / "jitter_line.svg")
-
-    plt.close()
-
-    log.info("Jitter: Done!")
-
-    if "latency" in results.keys():
-
-        log.info("Latency: Plotting..")
-
-        log.debug("Latency Histogram")
-
-        plt.hist(
-            df["latency"],
-            bins=100,
-            label=label,
-        )
-        plt.legend(loc="upper right")
-        plt.xlabel("Latency / ms")
-        plt.ylabel("Count")
-        plt.title("Latency Histogram")
-        plt.grid(True)
-
-        plt.savefig(plot_path / "latency_hist.png")
-        plt.savefig(plot_path / "latency_hist.svg")
-
-        plt.close()
-
-        log.debug("Latency Scatter")
-
-        plt.scatter(
-            df["packet_index"],
-            df["latency"],
-            s=10,
-            label=label,
-        )
-        plt.legend(loc="upper right")
-        plt.ylabel("Latency / ms")
-        plt.xlabel("Packet Index")
-        plt.title("Latency vs Packet Index")
-        plt.grid(True)
-
-        plt.savefig(plot_path / "latency_scatter.png")
-        plt.savefig(plot_path / "latency_scatter.svg")
-
-        plt.close()
-
-        log.debug("Latency Line")
-
+        log.debug("Throughput Line")
         plt.plot(
-            df["packet_index"],
-            df["latency"],
+            df["time"],
+            df["mbitrate"],
             linewidth=1,
             label=label,
         )
         plt.legend(loc="upper right")
-        plt.ylabel("Latency / ms")
-        plt.xlabel("Packet Index")
-        plt.title("Latency vs Packet Index")
+        plt.ylabel("Throughput / Mbit/s")
+        plt.xlabel("Time / s")
+        plt.title(f"Throughput over time\nTarget Throughput = {target_bitrate} Mbit/s")
         plt.grid(True)
 
-        plt.savefig(plot_path / "latency_line.png")
-        plt.savefig(plot_path / "latency_line.svg")
+        plt.savefig(plot_path / "throughput_line.png")
+        plt.savefig(plot_path / "throughput_line.svg")
 
         plt.close()
 
-        log.info("Latency: Done!")
+    else:
 
-    log.info(f"All Done. Plots are saved in: {plot_path}")
+        total_packets = results["packets_received"]
+
+        del results["bytes_received"]
+        del results["packets_received"]
+
+        results["packet_index"] = [i for i in range(total_packets)]
+
+        df = pandas.DataFrame(results)
+
+        log.info("Jitter: Plotting..")
+
+        log.debug("Jitter Histogram")
+
+        label = ""
+
+        if rely:
+            label = "Rely"
+        else:
+            label = "TCP"
+
+        plt.hist(
+            df["jitter"],
+            bins=100,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.xlabel("Jitter / ms")
+        plt.ylabel("Count")
+        plt.title("Jitter Histogram")
+        plt.grid(True)
+
+        plt.savefig(plot_path / "jitter_hist.png")
+        plt.savefig(plot_path / "jitter_hist.svg")
+
+        plt.close()
+
+        log.debug("Jitter Scatter")
+        plt.scatter(
+            df["packet_index"],
+            df["jitter"],
+            s=10,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.ylabel("Jitter / ms")
+        plt.xlabel("Packet Index")
+        plt.title("Jitter vs Packet Index")
+        plt.grid(True)
+
+        plt.savefig(plot_path / "jitter_scatter.png")
+        plt.savefig(plot_path / "jitter_scatter.svg")
+
+        plt.close()
+
+        log.debug("Jitter Line")
+        plt.plot(
+            df["packet_index"],
+            df["jitter"],
+            linewidth=1,
+            label=label,
+        )
+        plt.legend(loc="upper right")
+        plt.ylabel("Jitter / ms")
+        plt.xlabel("Packet Index")
+        plt.title("Jitter vs Packet Index")
+        plt.grid(True)
+
+        plt.savefig(plot_path / "jitter_line.png")
+        plt.savefig(plot_path / "jitter_line.svg")
+
+        plt.close()
+
+        log.info("Jitter: Done!")
+
+        if "latency" in results.keys():
+
+            log.info("Latency: Plotting..")
+
+            log.debug("Latency Histogram")
+
+            plt.hist(
+                df["latency"],
+                bins=100,
+                label=label,
+            )
+            plt.legend(loc="upper right")
+            plt.xlabel("Latency / ms")
+            plt.ylabel("Count")
+            plt.title("Latency Histogram")
+            plt.grid(True)
+
+            plt.savefig(plot_path / "latency_hist.png")
+            plt.savefig(plot_path / "latency_hist.svg")
+
+            plt.close()
+
+            log.debug("Latency Scatter")
+
+            plt.scatter(
+                df["packet_index"],
+                df["latency"],
+                s=10,
+                label=label,
+            )
+            plt.legend(loc="upper right")
+            plt.ylabel("Latency / ms")
+            plt.xlabel("Packet Index")
+            plt.title("Latency vs Packet Index")
+            plt.grid(True)
+
+            plt.savefig(plot_path / "latency_scatter.png")
+            plt.savefig(plot_path / "latency_scatter.svg")
+
+            plt.close()
+
+            log.debug("Latency Line")
+
+            plt.plot(
+                df["packet_index"],
+                df["latency"],
+                linewidth=1,
+                label=label,
+            )
+            plt.legend(loc="upper right")
+            plt.ylabel("Latency / ms")
+            plt.xlabel("Packet Index")
+            plt.title("Latency vs Packet Index")
+            plt.grid(True)
+
+            plt.savefig(plot_path / "latency_line.png")
+            plt.savefig(plot_path / "latency_line.svg")
+
+            plt.close()
+
+            log.info("Latency: Done!")
+
+        log.info(f"All Done. Plots are saved in: {plot_path}")
 
 
 if __name__ == "__main__":
