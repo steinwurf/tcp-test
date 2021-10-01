@@ -6,7 +6,7 @@ import pathlib
 import json
 
 
-def plot(log, json_path, plot_path, rely):
+def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
 
     log.info(f"Gathering results from {json_path}")
 
@@ -39,17 +39,27 @@ def plot(log, json_path, plot_path, rely):
 
         if rely:
             label = "Rely"
+            color = "-r"
         else:
             label = "TCP"
+            color = "-b"
+
+        if rtt:
+            label += f"\nRTT = {rtt}ms"
+        if loss:
+            label += f"\nLoss = {round(loss, 2)}%"
+        if capacity:
+            label += f"\nLink-capacity = {round(capacity,2)}Mbit"
 
         log.debug("Throughput Line")
         plt.plot(
             df["time"],
             df["mbitrate"],
+            color,
             linewidth=1,
             label=label,
         )
-        plt.legend(loc="upper right")
+        plt.legend()
         plt.ylabel("Throughput / Mbit/s")
         plt.xlabel("Time / s")
         plt.title(f"Throughput over time\nTarget Throughput = {target_bitrate} Mbit/s")
@@ -229,6 +239,27 @@ if __name__ == "__main__":
         default=False,
     )
 
+    parser.add_argument(
+        "--rtt",
+        type=int,
+        help="RTT of results in ms. For the legend",
+        default=None,
+    )
+
+    parser.add_argument(
+        "--loss",
+        type=float,
+        help="Packet loss percentage of results. For the legend",
+        default=None,
+    )
+
+    parser.add_argument(
+        "--capacity",
+        type=float,
+        help="The Link capacity of results. For the legend",
+        default=None,
+    )
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
@@ -242,4 +273,12 @@ if __name__ == "__main__":
     json_path = pathlib.Path(args.json_path).resolve()
     plot_path = pathlib.Path(args.plot_path).resolve()
 
-    plot(log=log, json_path=json_path, plot_path=plot_path, rely=args.rely)
+    plot(
+        log=log,
+        json_path=json_path,
+        plot_path=plot_path,
+        rely=args.rely,
+        rtt=args.rtt,
+        loss=args.loss,
+        capacity=args.capacity,
+    )
