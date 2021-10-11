@@ -6,13 +6,13 @@ import argparse
 import logging
 import json
 import os
-from detail.console_statistics import ConsoleStatistics
-from detail.regular_statistics import (
+from .detail.console_statistics import ConsoleStatistics
+from .detail.regular_statistics import (
     PacketStatistics,
     JitterStatistics,
     LatencyStatistics,
 )
-from detail.statistics_collector import StatisticsCollector
+from .detail.statistics_collector import StatisticsCollector
 
 
 def client(server_ip, server_port, packet_size, statistics_collector, result_path, log):
@@ -86,8 +86,7 @@ def dump_json(results: dict, path):
         f.write(json_string)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def setup_client_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--server_ip", type=str, help="Server IP address", default="127.0.0.1"
@@ -114,15 +113,10 @@ if __name__ == "__main__":
         "--result_path", type=str, help="The path to the results", default="result.json"
     )
 
-    log = logging.getLogger("client")
-    log.addHandler(logging.StreamHandler())
+    return parser
 
-    args = parser.parse_args()
 
-    if args.verbose:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
+def setup_statistics(clock_sync: bool, log) -> StatisticsCollector:
 
     report_interval = 100
 
@@ -138,7 +132,7 @@ if __name__ == "__main__":
 
     collectors = [packet_console, jitter_console]
 
-    if args.clock_sync:
+    if clock_sync:
 
         latency_statistics = LatencyStatistics(log=log)
         latency_console = ConsoleStatistics(
@@ -149,6 +143,27 @@ if __name__ == "__main__":
     statistics_collector = StatisticsCollector(
         collectors=collectors, report_interval=report_interval
     )
+
+    return statistics_collector
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+
+    log = logging.getLogger("client")
+    log.addHandler(logging.StreamHandler())
+
+    parser = setup_client_arguments(parser=parser)
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
+
+    statistics_collector = setup_statistics(clock_sync=args.clock_sync, log=log)
 
     start_time = time.time()
 
@@ -164,4 +179,6 @@ if __name__ == "__main__":
     elapsed_time = time.time() - start_time
 
     log.info(f"Time Elapsed: {elapsed_time} s")
-    log.info(f"Packets Received: {packet_statistics.packets_received}")
+    log.info(
+        f"Packets Received: {statistics_collector.collectors[0].statistics.packets_received}"
+    )

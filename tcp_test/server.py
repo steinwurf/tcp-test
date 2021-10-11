@@ -74,8 +74,7 @@ def server(packets, throughput, server_ip, server_port, packet_size, log):
         log.info("Server stopped")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def setup_server_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--packets", type=int, help="The number of packet to receive", default=10000
@@ -100,9 +99,17 @@ if __name__ == "__main__":
         default=1,
     )
 
+    return parser
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
     log = logging.getLogger("server")
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
+
+    parser = setup_server_arguments(parser=parser)
 
     args = parser.parse_args()
 

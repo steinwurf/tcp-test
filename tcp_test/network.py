@@ -5,10 +5,10 @@ import asyncio
 import pathlib
 import time
 
-import detail.shell
-import detail.ip
-import detail.netns
-import detail.rely_tunnel
+import tcp_test.detail.shell
+import tcp_test.detail.ip
+import tcp_test.detail.netns
+import tcp_test.detail.rely_tunnel
 
 
 def script_path():
@@ -53,10 +53,10 @@ async def network(
     server_port = 12345
     server_ip = "10.0.0.1"
 
-    shell = detail.shell.Shell(log=log, sudo=True)
+    shell = tcp_test.detail.shell.Shell(log=log, sudo=True)
 
     log.info("Creating namespaces")
-    netns = detail.netns.NetNS(shell=shell, ip_factory=detail.ip.IP)
+    netns = tcp_test.detail.netns.NetNS(shell=shell, ip_factory=tcp_test.detail.ip.IP)
     namespaces = netns.list()
 
     if "demo0" in namespaces:
@@ -68,7 +68,7 @@ async def network(
     demo0 = netns.add(name="demo0")
     demo1 = netns.add(name="demo1")
 
-    ip = detail.ip.IP(shell=shell)
+    ip = tcp_test.detail.ip.IP(shell=shell)
     ip.link_veth_add(p1_name="demo0-eth", p2_name="demo1-eth")
     ip.link_set(namespace="demo0", interface="demo0-eth")
     ip.link_set(namespace="demo1", interface="demo1-eth")
@@ -92,11 +92,11 @@ async def network(
 
         log.debug("Starting Rely Daemon Servers...")
 
-        rely_tunnel0 = detail.rely_tunnel.RelyTunnel(
+        rely_tunnel0 = tcp_test.detail.rely_tunnel.RelyTunnel(
             shell=demo0.shell,
             rely_path=rely_path,
         )
-        rely_tunnel1 = detail.rely_tunnel.RelyTunnel(
+        rely_tunnel1 = tcp_test.detail.rely_tunnel.RelyTunnel(
             shell=demo1.shell,
             rely_path=rely_path,
         )
@@ -176,8 +176,7 @@ async def network(
         pass
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def setup_network_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--packets", type=int, help="The number of packet to receive", default=10000
@@ -229,8 +228,16 @@ if __name__ == "__main__":
         default=60,
     )
 
+    return parser
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
+
+    parser = setup_network_arguments(parser=parser)
 
     args = parser.parse_args()
 

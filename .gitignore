@@ -4,3 +4,4 @@ build
 results
 **/__pycache__
 coverage
+tcp_test.egg-info

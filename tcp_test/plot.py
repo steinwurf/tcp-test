@@ -211,8 +211,7 @@ def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
         log.info(f"All Done. Plots are saved in: {plot_path}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def setup_plot_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--json_path",
@@ -260,8 +259,16 @@ if __name__ == "__main__":
         default=None,
     )
 
+    return parser
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
+
+    parser = setup_plot_arguments(parser=parser)
 
     args = parser.parse_args()
 
