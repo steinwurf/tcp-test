@@ -5,11 +5,11 @@ import pathlib
 import time
 
 from tcp_test import __version__
-import tcp_test.network
-import tcp_test.iperf
-import tcp_test.client
-import tcp_test.server
-import tcp_test.plot
+from . import network
+from . import iperf
+from . import server
+from . import client
+from . import plot
 
 
 def main(command_line=None):
@@ -57,7 +57,7 @@ def network_run(parser: argparse.ArgumentParser):
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
-    parser = tcp_test.network.setup_network_arguments(parser=parser)
+    parser = network.setup_network_arguments(parser=parser)
 
     args = parser.parse_known_args()[0]
 
@@ -75,7 +75,7 @@ def network_run(parser: argparse.ArgumentParser):
         rely_path = None
 
     asyncio.run(
-        tcp_test.network.network(
+        network.network(
             log=log,
             packets=args.packets,
             packet_size=args.packet_size,
@@ -95,7 +95,7 @@ def iperf_run(parser: argparse.ArgumentParser):
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
-    parser = tcp_test.iperf.setup_iperf_arguments(parser=parser)
+    parser = iperf.setup_iperf_arguments(parser=parser)
 
     args = parser.parse_known_args()[0]
 
@@ -112,7 +112,7 @@ def iperf_run(parser: argparse.ArgumentParser):
         rely_path = None
 
     asyncio.run(
-        tcp_test.iperf.iperf(
+        iperf.iperf(
             log=log,
             packets=args.packets,
             packet_size=args.packet_size,
@@ -131,7 +131,7 @@ def client_run(parser: argparse.ArgumentParser):
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
-    parser = tcp_test.client.setup_client_arguments(parser=parser)
+    parser = client.setup_client_arguments(parser=parser)
 
     args = parser.parse_known_args()[0]
 
@@ -140,13 +140,11 @@ def client_run(parser: argparse.ArgumentParser):
     else:
         log.setLevel(logging.INFO)
 
-    statistics_collector = tcp_test.client.setup_statistics(
-        clock_sync=args.clock_sync, log=log
-    )
+    statistics_collector = client.setup_statistics(clock_sync=args.clock_sync, log=log)
 
     start_time = time.time()
 
-    tcp_test.client.client(
+    client.client(
         server_port=args.server_port,
         server_ip=args.server_ip,
         packet_size=args.packet_size,
@@ -169,11 +167,11 @@ def server_run(parser: argparse.ArgumentParser):
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.INFO)
 
-    parser = tcp_test.server.setup_server_arguments(parser=parser)
+    parser = server.setup_server_arguments(parser=parser)
 
     args = parser.parse_known_args()[0]
 
-    tcp_test.server.server(
+    server.server(
         packets=args.packets,
         throughput=args.throughput,
         packet_size=args.packet_size,
@@ -188,7 +186,7 @@ def plot_run(parser: argparse.ArgumentParser):
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
-    parser = tcp_test.plot.setup_plot_arguments(parser=parser)
+    parser = plot.setup_plot_arguments(parser=parser)
 
     args = parser.parse_known_args()[0]
 
@@ -200,7 +198,7 @@ def plot_run(parser: argparse.ArgumentParser):
     json_path = pathlib.Path(args.json_path).resolve()
     plot_path = pathlib.Path(args.plot_path).resolve()
 
-    tcp_test.plot.plot(
+    plot.plot(
         log=log,
         json_path=json_path,
         plot_path=plot_path,

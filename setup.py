@@ -18,7 +18,7 @@ setup(
     long_description_content_type="text/x-rst",
     version=__version__,
     url="https://github.com/steinwurf/tcp-test",
-    packages=["tcp_test"],
+    packages=["tcp_test", "tcp_test.detail"],
     install_requires=["matplotlib", "pandas"],
     classifiers=[
         "Programming Language :: Python :: 3",
