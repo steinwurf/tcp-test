@@ -82,8 +82,8 @@ async def network(
     demo0.up(interface="lo")
     demo1.up(interface="lo")
 
-    demo0.tc(interface="demo0-eth", delay=20, loss=1)
-    demo1.tc(interface="demo1-eth", delay=20, loss=1)
+    demo0.tc(interface="demo0-eth", delay=20, loss=1, jitter=10)
+    demo1.tc(interface="demo1-eth", delay=20, loss=1, jitter=10)
 
     log.debug(demo0.tc_show(interface="demo0-eth"))
     log.debug(demo1.tc_show(interface="demo1-eth"))

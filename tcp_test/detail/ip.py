@@ -62,7 +62,16 @@ class IP(object):
     def tc_show(self, interface, cwd=None):
         return self.shell.run(cmd=f"tc qdisc show dev {interface}", cwd=cwd)
 
-    def tc(self, interface, delay=None, loss=None, rate=None, limit=None, cwd=None):
+    def tc(
+        self,
+        interface,
+        delay=None,
+        loss=None,
+        rate=None,
+        limit=None,
+        cwd=None,
+        jitter=None,
+    ):
         output = self.tc_show(interface=interface, cwd=cwd)
         if "netem" in output:
             action = "change"
@@ -71,6 +80,7 @@ class IP(object):
         cmd = f"tc qdisc {action} dev {interface} root netem"
         if delay:
             cmd += f" delay {delay}ms "
+            cmd += f"{jitter}ms" if jitter else ""
         if loss:
             cmd += f" loss {loss}%"
         if rate:
