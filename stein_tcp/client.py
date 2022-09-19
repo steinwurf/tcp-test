@@ -6,21 +6,30 @@ import argparse
 import logging
 import json
 import os
-from detail.console_statistics import ConsoleStatistics
-from detail.regular_statistics import (
+from util import ConsoleStatistics
+from util import (
     PacketStatistics,
     JitterStatistics,
     LatencyStatistics,
 )
-from detail.statistics_collector import StatisticsCollector
+from util import StatisticsCollector
+
+__all__ = ["client"]
 
 
-def client(server_ip, server_port, packet_size, statistics_collector, result_path, log):
+def client(
+    server_ip: str,
+    packet_size: int,
+    statistics_collector: StatisticsCollector,
+    result_path: pathlib.Path,
+    log: logging.Logger,
+):
 
     client = socket.socket()
     client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-    server_address = (server_ip, server_port)
+    server_address = server_ip.split(":")
+    server_address = (server_address[0], int(server_address[1]))
     log.info(f"Connecting to (Server, Port): {server_address}")
 
     client.connect(server_address)
@@ -86,24 +95,35 @@ def dump_json(results: dict, path):
         f.write(json_string)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--server_ip", type=str, help="Server IP address", default="127.0.0.1"
-    )
-
-    parser.add_argument("--server_port", type=int, help="Server port", default=12345)
-
-    parser.add_argument(
-        "--verbose", action="store_true", help="Server port", default=False
-    )
-
-    parser.add_argument(
-        "--packet_size", type=int, help="The number of packet to receive", default=1400
+        "-s",
+        "--server_ip",
+        type=str,
+        help="Server IP address",
+        default="127.0.0.1:12345",
     )
 
     parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Debug printing",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-l",
+        "--packet_size",
+        type=int,
+        help="The number of bytes in each packet sent",
+        default=1400,
+    )
+
+    parser.add_argument(
+        "-c",
         "--clock-sync",
         action="store_true",
         help="If the server and client clocks are synchronized",
@@ -111,7 +131,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--result_path", type=str, help="The path to the results", default="result.json"
+        "-o",
+        "--result_path",
+        type=str,
+        help="The path to the JSON results",
+        default="result.json",
     )
 
     log = logging.getLogger("client")
@@ -153,7 +177,6 @@ if __name__ == "__main__":
     start_time = time.time()
 
     client(
-        server_port=args.server_port,
         server_ip=args.server_ip,
         packet_size=args.packet_size,
         statistics_collector=statistics_collector,
@@ -165,3 +188,7 @@ if __name__ == "__main__":
 
     log.info(f"Time Elapsed: {elapsed_time} s")
     log.info(f"Packets Received: {packet_statistics.packets_received}")
+
+
+if __name__ == "__main__":
+    main()

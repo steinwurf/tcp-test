@@ -4,13 +4,24 @@ import time
 import argparse
 import logging
 
-
-def calculate_interval(buffer_size: int, throughput: float or int):
-    throughput = throughput * 1024 * 1024
-    return buffer_size / throughput
+__all__ = ["server", "server_cli"]
 
 
-def run(client_socket, packets, packet_size, interval, log):
+def calculate_interval(
+    buffer_size: int,
+    bandwidth: float or int,
+) -> float:
+    bandwidth = bandwidth * 1024 * 1024
+    return buffer_size / bandwidth
+
+
+def run(
+    client_socket: socket.socket,
+    packets: int,
+    packet_size: int,
+    interval: int,
+    log: logging.Logger,
+):
 
     packets_sent = 0
 
@@ -35,19 +46,26 @@ def run(client_socket, packets, packet_size, interval, log):
     client_socket.close()
 
 
-def server(packets, throughput, server_ip, server_port, packet_size, log):
+def server(
+    packets: int,
+    bandwidth: int | float,
+    server_ip: str,
+    packet_size: int,
+    log: logging.Logger,
+):
 
     sock = socket.socket()
     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    server_address = (server_ip, server_port)
+    server_address = server_ip.split(":")
+    server_address = (server_address[0], int(server_address[1]))
 
     log.info(f"Starting up (Server, Port): {server_address}")
     sock.bind(server_address)
 
     sock.listen(1)
-    interval = calculate_interval(packet_size, throughput)
+    interval = calculate_interval(packet_size, bandwidth)
 
     log.info("Waiting for Client to connect...")
     client_socket, client_address = sock.accept()
@@ -74,29 +92,38 @@ def server(packets, throughput, server_ip, server_port, packet_size, log):
         log.info("Server stopped")
 
 
-if __name__ == "__main__":
+def server_cli():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--packets", type=int, help="The number of packet to receive", default=10000
+        "-i",
+        "--packets",
+        type=int,
+        help="The number of packet to receive",
+        default=1000,
     )
 
     parser.add_argument(
-        "--packet_size", type=int, help="The number of packet to receive", default=1400
+        "-l",
+        "--packet_size",
+        type=int,
+        help="The number of packet to receive",
+        default=1400,
     )
 
     parser.add_argument(
+        "-s",
         "--server_ip",
         type=str,
         help="The IP address the server listens for connections to",
-        default="0.0.0.0",
+        default="0.0.0.0:12345",
     )
-    parser.add_argument("--server_port", type=int, help="Server port", default=12345)
 
     parser.add_argument(
-        "--throughput",
+        "-b",
+        "--bandwidth",
         type=float,
-        help="The throughput from the server to the client in MB/s",
+        help="The bandwidth from the server to the client in MB/s",
         default=1,
     )
 
@@ -108,9 +135,12 @@ if __name__ == "__main__":
 
     server(
         packets=args.packets,
-        throughput=args.throughput,
+        bandwidth=args.bandwidth,
         packet_size=args.packet_size,
         server_ip=args.server_ip,
-        server_port=args.server_port,
         log=log,
     )
+
+
+if __name__ == "__main__":
+    server_cli()

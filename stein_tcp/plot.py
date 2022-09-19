@@ -6,7 +6,15 @@ import pathlib
 import json
 
 
-def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
+def plot(
+    log: logging.Logger,
+    json_path: pathlib.Path,
+    plot_path: pathlib.Path,
+    rely: bool | None,
+    rtt: int,
+    loss: float,
+    capacity: float | int,
+):
 
     log.info(f"Gathering results from {json_path}")
 
@@ -51,7 +59,7 @@ def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
         if capacity:
             label += f"\nLink-capacity = {round(capacity,2)}Mbit"
 
-        log.debug("Throughput Line")
+        log.debug("bandwidth Line")
         plt.plot(
             df["time"],
             df["mbitrate"],
@@ -60,13 +68,13 @@ def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
             label=label,
         )
         plt.legend()
-        plt.ylabel("Throughput / Mbit/s")
+        plt.ylabel("bandwidth / Mbit/s")
         plt.xlabel("Time / s")
-        plt.title(f"Throughput over time\nTarget Throughput = {target_bitrate} Mbit/s")
+        plt.title(f"bandwidth over time\nTarget bandwidth = {target_bitrate} Mbit/s")
         plt.grid(True)
 
-        plt.savefig(plot_path / "throughput_line.png")
-        plt.savefig(plot_path / "throughput_line.svg")
+        plt.savefig(plot_path / "bandwidth_line.png")
+        plt.savefig(plot_path / "bandwidth_line.svg")
 
         plt.close()
 
@@ -210,11 +218,11 @@ def plot(log, json_path, plot_path, rely, rtt, loss, capacity):
 
         log.info(f"All Done. Plots are saved in: {plot_path}")
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def plot_cli():
+    parser = argparse.ArgumentParser(name="2D Plotter")
 
     parser.add_argument(
+        "-j",
         "--json_path",
         type=str,
         help="The path to the json results",
@@ -222,6 +230,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-o",
         "--plot_path",
         type=str,
         help="The path to the directory where the plots will be stored",
@@ -229,7 +238,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--verbose", action="store_true", help="Get debug information", default=False
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Get debug information",
+        default=False,
     )
 
     parser.add_argument(
@@ -240,6 +253,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-r",
         "--rtt",
         type=int,
         help="RTT of results in ms. For the legend",
@@ -247,6 +261,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-l",
         "--loss",
         type=float,
         help="Packet loss percentage of results. For the legend",
@@ -254,6 +269,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-c",
         "--capacity",
         type=float,
         help="The Link capacity of results. For the legend",
@@ -282,3 +298,7 @@ if __name__ == "__main__":
         loss=args.loss,
         capacity=args.capacity,
     )
+
+
+if __name__ == "__main__":
+    plot_cli()

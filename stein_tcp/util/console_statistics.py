@@ -1,11 +1,26 @@
+import logging
+
+from stein_tcp.util.regular_statistics import Statistics
+
+
 class ConsoleStatistics:
-    def __init__(self, log, statistics, report_interval=100):
+    def __init__(
+        self,
+        log: logging.Logger,
+        statistics: Statistics,
+        report_interval=100,
+    ):
         self.statistics = statistics
         self.log = log
         self.iterations = 0
         self.report_interval = report_interval
 
-    def add_result(self, server_time, client_time, bytes_received):
+    def add_result(
+        self,
+        server_time: float,
+        client_time: float,
+        bytes_received: int,
+    ):
 
         self.log.debug(f"Added result")
 

@@ -1,26 +1,26 @@
 import argparse
+import subprocess
 import logging
 import os
 import asyncio
 import pathlib
+import shutil
 import time
 
-import detail.shell
-import detail.ip
-import detail.netns
-import detail.rely_tunnel
+from stein_tcp.util import shell, ip, netns, rely_tunnel
 
 
-def script_path():
+
+def script_path() -> pathlib.Path:
     return pathlib.Path(__file__).resolve().parent
 
 
-async def monitor(log):
+async def monitor(log: logging.Logger):
 
     while True:
         await asyncio.sleep(1)
 
-        tasks = asyncio.tasks.all_tasks()
+        tasks: set[asyncio.Task] = asyncio.tasks.all_tasks()
 
         keep_running = False
 
@@ -38,25 +38,24 @@ async def monitor(log):
 
 
 async def network(
-    log,
-    packets,
-    packet_size,
-    throughput,
-    result_path,
-    verbose,
-    rely_path,
-    repair_interval,
-    repair_target,
-    timeout,
+    log: logging.Logger,
+    packets: int,
+    packet_size: int,
+    bandwidth: float | int,
+    result_path: pathlib.Path | str | None,
+    verbose: bool | None,
+    rely_path: pathlib.Path | str | None,
+    repair_interval: int,
+    repair_target: int,
+    timeout: int,
 ):
 
-    server_port = 12345
-    server_ip = "10.0.0.1"
+    server_ip = "10.0.0.1:12345"
 
-    shell = detail.shell.Shell(log=log, sudo=True)
+    shell = shell.Shell(log=log, sudo=True)
 
     log.info("Creating namespaces")
-    netns = detail.netns.NetNS(shell=shell, ip_factory=detail.ip.IP)
+    netns = netns.NetNS(shell=shell, ip_factory=ip.IP)
     namespaces = netns.list()
 
     if "demo0" in namespaces:
@@ -68,7 +67,7 @@ async def network(
     demo0 = netns.add(name="demo0")
     demo1 = netns.add(name="demo1")
 
-    ip = detail.ip.IP(shell=shell)
+    ip = ip.IP(shell=shell)
     ip.link_veth_add(p1_name="demo0-eth", p2_name="demo1-eth")
     ip.link_set(namespace="demo0", interface="demo0-eth")
     ip.link_set(namespace="demo1", interface="demo1-eth")
@@ -92,11 +91,11 @@ async def network(
 
         log.debug("Starting Rely Daemon Servers...")
 
-        rely_tunnel0 = detail.rely_tunnel.RelyTunnel(
+        rely_tunnel0 = rely_tunnel.RelyTunnel(
             shell=demo0.shell,
             rely_path=rely_path,
         )
-        rely_tunnel1 = detail.rely_tunnel.RelyTunnel(
+        rely_tunnel1 = rely_tunnel.RelyTunnel(
             shell=demo1.shell,
             rely_path=rely_path,
         )
@@ -113,7 +112,7 @@ async def network(
         rely_tunnel0.start_tunnel(
             id="demo0tun",
             tunnel_ip="11.11.11.11",
-            tunnel_in=f"{server_ip}:12345",
+            tunnel_in=f"{server_ip}",
             tunnel_out=f"10.0.0.2:12345",
             packet_size=packet_size,
         )
@@ -122,7 +121,7 @@ async def network(
             id="demo1tun",
             tunnel_ip="11.11.11.22",
             tunnel_in=f"10.0.0.2:12345",
-            tunnel_out=f"{server_ip}:12345",
+            tunnel_out=f"{server_ip}",
             packet_size=packet_size,
         )
 
@@ -152,19 +151,19 @@ async def network(
 
         rely_tunnel1.set_decoder_timeout(id="demo1tun", timeout=timeout)
 
-        server_ip = "11.11.11.11"
+        server_ip = "11.11.11.11:12345"
 
     try:
         # The location of the scripts
 
         await asyncio.gather(
             demo0.run_async(
-                f"python3 server.py --packets {packets} --packet_size {packet_size} --server_ip {server_ip} --server_port {server_port} --throughput {throughput}",
+                f"python3 server.py --packets {packets} --packet_size {packet_size} --server_ip {server_ip} --bandwidth {bandwidth}",
                 delay=2,
                 cwd=script_path(),
             ),
             demo1.run_async(
-                f"python3 client.py --server_ip {server_ip} --server_port {server_port} --packet_size {packet_size} --clock-sync "
+                f"python3 client.py --server_ip {server_ip} --packet_size {packet_size} --clock-sync "
                 f"--result_path={result_path.resolve()} {verbose}",
                 delay=4,
                 cwd=script_path(),
@@ -176,46 +175,62 @@ async def network(
         pass
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--packets", type=int, help="The number of packet to receive", default=10000
+        "-i",
+        "--packets",
+        type=int,
+        help="The number of packet to receive",
+        default=1000,
     )
 
     parser.add_argument(
-        "--throughput",
+        "-b",
+        "--bandwidth",
         type=float,
-        help="The throughput from the server to the client in MB/s",
+        help="The bandwidth from the server to the client in MB/s",
         default=1,
     )
 
     parser.add_argument(
-        "--verbose", action="store_true", help="Get debug info", default=False
+        "-v", "--verbose", action="store_true", help="Get debug info", default=False
     )
 
     parser.add_argument(
-        "--packet_size", type=int, help="The number of packet to receive", default=1300
+        "-l",
+        "--packet_size",
+        type=int,
+        help="The number of packet to receive",
+        default=1300,
     )
 
     parser.add_argument(
-        "--result_path", type=str, help="The path to the results", default="result.json"
+        "-o",
+        "--result_path",
+        type=str,
+        help="The path to the results",
+        default="result.json",
     )
 
     parser.add_argument(
+        "-p",
         "--rely_path",
         type=str,
         help="The path to the rely_app binary",
-        default=None,
+        default="rely",
     )
 
     parser.add_argument(
+        "-k",
         "--repair_interval",
         type=int,
         help="The distance in packets between each generation of repair",
         default=5,
     )
     parser.add_argument(
+        "-r",
         "--repair_target",
         type=int,
         help="The number of repair packets to generate at each generation",
@@ -223,6 +238,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-t",
         "--timeout",
         type=int,
         help="The time a packet is held by the encoder/decoder",
@@ -241,18 +257,27 @@ if __name__ == "__main__":
         log.setLevel(logging.INFO)
         verbose = ""
 
-    if args.rely_path:
-        rely_path = pathlib.Path(args.rely_path).resolve()
+    shell = shell.Shell(log=log, sudo=False)
 
-    else:
-        rely_path = None
+    rely_path = None
+
+    if args.rely_path == "rely":
+        try:
+            shell.run("rely -v")
+            rely_path = "rely"
+        except subprocess.CalledProcessError:
+            try:
+                shell.run("rely_app -v")
+                rely_path = "rely_app"
+            except subprocess.CalledProcessError:
+                rely_path = shutil.which("rely") or shutil.which("rely_app")
 
     asyncio.run(
         network(
             log=log,
             packets=args.packets,
             packet_size=args.packet_size,
-            throughput=args.throughput,
+            bandwidth=args.bandwidth,
             result_path=pathlib.Path(args.result_path),
             verbose=verbose,
             rely_path=rely_path,
@@ -261,3 +286,7 @@ if __name__ == "__main__":
             timeout=args.timeout,
         )
     )
+
+
+if __name__ == "__main__":
+    main()
