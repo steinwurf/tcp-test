@@ -84,8 +84,8 @@ async def iperf(
     demo0.up(interface="lo")
     demo1.up(interface="lo")
 
-    demo0.tc(interface="demo0-eth", delay=1000, loss=1, limit=15000)
-    demo1.tc(interface="demo1-eth", delay=1000, loss=1, limit=15000)
+    demo0.tc(interface="demo0-eth", delay=20, loss=1)
+    demo1.tc(interface="demo1-eth", delay=20, loss=1)
 
     log.debug(demo0.tc_show(interface="demo0-eth"))
     log.debug(demo1.tc_show(interface="demo1-eth"))
@@ -191,7 +191,9 @@ async def iperf(
 
 
 def iperf_cli():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         "-i",

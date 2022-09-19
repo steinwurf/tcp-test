@@ -93,7 +93,9 @@ def dump_json(results: dict, path):
 
 
 def client_cli():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         "-s",
