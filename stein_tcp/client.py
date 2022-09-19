@@ -6,13 +6,10 @@ import argparse
 import logging
 import json
 import os
-from util import ConsoleStatistics
-from util import (
-    PacketStatistics,
-    JitterStatistics,
-    LatencyStatistics,
-)
-from util import StatisticsCollector
+
+import stein_tcp.util.console_statistics
+import stein_tcp.util.statistics_collector
+import stein_tcp.util.regular_statistics
 
 __all__ = ["client"]
 
@@ -20,7 +17,7 @@ __all__ = ["client"]
 def client(
     server_ip: str,
     packet_size: int,
-    statistics_collector: StatisticsCollector,
+    stat_collector: stein_tcp.util.statistics_collector.StatisticsCollector,
     result_path: pathlib.Path,
     log: logging.Logger,
 ):
@@ -56,7 +53,7 @@ def client(
         server_time = struct.unpack_from("<Q", data, 0)[0]
         client_time = int(time.time_ns() / 1_000_000)
 
-        statistics_collector.add_result(
+        stat_collector.add_result(
             server_time=server_time, client_time=client_time, bytes_received=len(data)
         )
 
@@ -67,7 +64,7 @@ def client(
 
     results = {}
 
-    for collector in statistics_collector.collectors:
+    for collector in stat_collector.collectors:
 
         result = collector.statistics.result()
         gather_results(results, result)
@@ -95,7 +92,7 @@ def dump_json(results: dict, path):
         f.write(json_string)
 
 
-def main():
+def client_cli():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -104,6 +101,7 @@ def main():
         type=str,
         help="Server IP address",
         default="127.0.0.1:12345",
+        metavar="",
     )
 
     parser.add_argument(
@@ -120,6 +118,7 @@ def main():
         type=int,
         help="The number of bytes in each packet sent",
         default=1400,
+        metavar="",
     )
 
     parser.add_argument(
@@ -136,6 +135,7 @@ def main():
         type=str,
         help="The path to the JSON results",
         default="result.json",
+        metavar="",
     )
 
     log = logging.getLogger("client")
@@ -150,13 +150,13 @@ def main():
 
     report_interval = 100
 
-    packet_statistics = PacketStatistics(log=log)
-    packet_console = ConsoleStatistics(
+    packet_statistics = stein_tcp.util.regular_statistics.PacketStatistics(log=log)
+    packet_console = stein_tcp.util.console_statistics.ConsoleStatistics(
         log=log, statistics=packet_statistics, report_interval=report_interval
     )
 
-    jitter_statistics = JitterStatistics(log=log)
-    jitter_console = ConsoleStatistics(
+    jitter_statistics = stein_tcp.util.regular_statistics.JitterStatistics(log=log)
+    jitter_console = stein_tcp.util.console_statistics.ConsoleStatistics(
         log=log, statistics=jitter_statistics, report_interval=report_interval
     )
 
@@ -164,13 +164,15 @@ def main():
 
     if args.clock_sync:
 
-        latency_statistics = LatencyStatistics(log=log)
-        latency_console = ConsoleStatistics(
+        latency_statistics = stein_tcp.util.regular_statistics.LatencyStatistics(
+            log=log
+        )
+        latency_console = stein_tcp.util.console_statistics.ConsoleStatistics(
             log=log, statistics=latency_statistics, report_interval=report_interval
         )
         collectors.append(latency_console)
 
-    statistics_collector = StatisticsCollector(
+    stat_collector = stein_tcp.util.statistics_collector.StatisticsCollector(
         collectors=collectors, report_interval=report_interval
     )
 
@@ -179,7 +181,7 @@ def main():
     client(
         server_ip=args.server_ip,
         packet_size=args.packet_size,
-        statistics_collector=statistics_collector,
+        stat_collector=stat_collector,
         result_path=pathlib.Path(args.result_path),
         log=log,
     )
@@ -191,4 +193,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    client_cli()

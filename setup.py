@@ -1,19 +1,21 @@
 from importlib.metadata import entry_points
-from setuptools import find_packages, setup
-
+from setuptools import setup
 
 setup(
-    name="stein-tcp",
+    name="stein_tcp",
     version="0.0.1",
     description="TCP client/server test tool",
     url="http://github.com/steinwurf/tcp-test",
     author="Steinwurf ApS",
     license="BSD-3-Clause",
-    packages=find_packages(),
+    packages=["stein_tcp", "stein_tcp.util"],
     entry_points={
         "console_scripts": [
-            "stein-tcp=stein_tcp.__main__:main",
-            "stein-net = stein_tcp.network:main",
+            "stein-net = stein_tcp.__main__:network_cli",
+            "stein-iperf = stein_tcp.__main__:iperf_cli",
+            "stein-client = stein_tcp.__main__:client_cli",
+            "stein-server = stein_tcp.__main__:server_cli",
+            "stein-plot = stein_tcp.__main__:plot_cli",
         ]
     },
     install_requires=[

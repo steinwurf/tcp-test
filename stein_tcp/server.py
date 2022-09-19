@@ -101,6 +101,7 @@ def server_cli():
         type=int,
         help="The number of packet to receive",
         default=1000,
+        metavar="",
     )
 
     parser.add_argument(
@@ -109,6 +110,7 @@ def server_cli():
         type=int,
         help="The number of packet to receive",
         default=1400,
+        metavar="",
     )
 
     parser.add_argument(
@@ -117,6 +119,7 @@ def server_cli():
         type=str,
         help="The IP address the server listens for connections to",
         default="0.0.0.0:12345",
+        metavar="",
     )
 
     parser.add_argument(
@@ -125,6 +128,7 @@ def server_cli():
         type=float,
         help="The bandwidth from the server to the client in MB/s",
         default=1,
+        metavar="",
     )
 
     log = logging.getLogger("server")

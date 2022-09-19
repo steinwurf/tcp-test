@@ -9,6 +9,22 @@ Rely - utilized under a TCP stream.
 It runs a test that measures the jitter and latency in the connection and can
 return plots to visualize this metric.
 
+============
+Installation
+============
+
+This package can be installed with pip:
+
+    pip install .
+
+and the package exposes the cli commands:
+
+    stein-net -h     # Network namespaces test
+    stein-plot -h    # Plotting tool
+    stein-iperf -h   # Iperf test in network namespaces
+    stein-client -h  # Standalone client
+    stein-server -h  # Standalone server
+
 Reasoning
 =========
 

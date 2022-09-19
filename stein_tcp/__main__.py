@@ -1,5 +1,21 @@
-from stein_tcp import main
+from . import network, iperf, client, server, plot
 
 
-if __name__ == "__main__":
-    main()
+def network_cli():
+    network.network_cli()
+
+
+def iperf_cli():
+    iperf.iperf_cli()
+
+
+def client_cli():
+    client.client_cli()
+
+
+def server_cli():
+    server.server_cli()
+
+
+def plot_cli():
+    plot.plot_cli()

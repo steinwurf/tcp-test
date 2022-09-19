@@ -5,7 +5,11 @@ import asyncio
 import pathlib
 import time
 
-from stein_tcp.util import rely_tunnel, iperf_shell
+from .util.rely_tunnel import RelyTunnel
+from .util.iperf_shell import iPerfShell
+from .util.ip import IP
+from .util.netns import NetNS
+from .util.shell import Shell
 
 
 def script_path() -> pathlib.Path:
@@ -48,10 +52,10 @@ async def iperf(
 
     server_ip = "10.0.0.1:12345"
 
-    shell = shell.Shell(log=log, sudo=True)
+    shell = Shell(log=log, sudo=True)
 
     log.info("Creating namespaces")
-    netns = netns.NetNS(shell=shell, ip_factory=ip.IP)
+    netns = NetNS(shell=shell, ip_factory=IP)
     namespaces = netns.list()
 
     if "demo0" in namespaces:
@@ -63,10 +67,10 @@ async def iperf(
     demo0 = netns.add(name="demo0")
     demo1 = netns.add(name="demo1")
 
-    iperf_server = iperf_shell.iPerfShell(shell=demo0.shell)
-    iperf_client = iperf_shell.iPerfShell(shell=demo1.shell)
+    iperf_server = iPerfShell(shell=demo0.shell)
+    iperf_client = iPerfShell(shell=demo1.shell)
 
-    ip = ip.IP(shell=shell)
+    ip = IP(shell=shell)
     ip.link_veth_add(p1_name="demo0-eth", p2_name="demo1-eth")
     ip.link_set(namespace="demo0", interface="demo0-eth")
     ip.link_set(namespace="demo1", interface="demo1-eth")
@@ -90,11 +94,11 @@ async def iperf(
 
         log.debug("Starting Rely Daemon Servers...")
 
-        rely_tunnel0 = rely_tunnel.RelyTunnel(
+        rely_tunnel0 = RelyTunnel(
             shell=demo0.shell,
             rely_path=rely_path,
         )
-        rely_tunnel1 = rely_tunnel.RelyTunnel(
+        rely_tunnel1 = RelyTunnel(
             shell=demo1.shell,
             rely_path=rely_path,
         )
@@ -186,7 +190,7 @@ async def iperf(
         pass
 
 
-def main():
+def iperf_cli():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -195,6 +199,7 @@ def main():
         type=int,
         help="The number of packet to receive",
         default=1000,
+        metavar="",
     )
 
     parser.add_argument(
@@ -203,6 +208,7 @@ def main():
         type=float,
         help="The bandwidth from the server to the client in bits/s",
         default=10000000,
+        metavar="",
     )
 
     parser.add_argument(
@@ -219,6 +225,7 @@ def main():
         type=int,
         help="The size of the packets to send",
         default=1300,
+        metavar="",
     )
 
     parser.add_argument(
@@ -227,6 +234,7 @@ def main():
         type=str,
         help="The path to the JSON results",
         default="result.json",
+        metavar="",
     )
 
     parser.add_argument(
@@ -235,6 +243,7 @@ def main():
         type=str,
         help="The path to the rely_app binary",
         default=None,
+        metavar="",
     )
 
     parser.add_argument(
@@ -243,12 +252,15 @@ def main():
         type=int,
         help="The distance in packets between each generation of repair",
         default=4,
+        metavar="",
     )
     parser.add_argument(
+        "-r",
         "--repair_target",
         type=int,
         help="The number of repair packets to generate at each generation",
         default=1,
+        metavar="",
     )
 
     parser.add_argument(
@@ -257,6 +269,7 @@ def main():
         type=int,
         help="The time a packet is held by the encoder/decoder",
         default=20,
+        metavar="",
     )
 
     log = logging.getLogger("client")
@@ -293,4 +306,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    iperf_cli()

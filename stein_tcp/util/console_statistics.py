@@ -1,6 +1,6 @@
 import logging
 
-from stein_tcp.util.regular_statistics import Statistics
+from .regular_statistics import Statistics
 
 
 class ConsoleStatistics:

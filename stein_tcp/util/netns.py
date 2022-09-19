@@ -1,4 +1,4 @@
-from stein_tcp.util.namespace_shell import NamespaceShell
+from .namespace_shell import NamespaceShell
 
 
 class NetNS(object):

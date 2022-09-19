@@ -218,8 +218,9 @@ def plot(
 
         log.info(f"All Done. Plots are saved in: {plot_path}")
 
+
 def plot_cli():
-    parser = argparse.ArgumentParser(name="2D Plotter")
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "-j",
@@ -227,6 +228,7 @@ def plot_cli():
         type=str,
         help="The path to the json results",
         default="result.json",
+        metavar="",
     )
 
     parser.add_argument(
@@ -235,6 +237,7 @@ def plot_cli():
         type=str,
         help="The path to the directory where the plots will be stored",
         default="./",
+        metavar="",
     )
 
     parser.add_argument(
@@ -258,6 +261,7 @@ def plot_cli():
         type=int,
         help="RTT of results in ms. For the legend",
         default=None,
+        metavar="",
     )
 
     parser.add_argument(
@@ -266,6 +270,7 @@ def plot_cli():
         type=float,
         help="Packet loss percentage of results. For the legend",
         default=None,
+        metavar="",
     )
 
     parser.add_argument(
@@ -274,6 +279,7 @@ def plot_cli():
         type=float,
         help="The Link capacity of results. For the legend",
         default=None,
+        metavar="",
     )
 
     log = logging.getLogger("client")

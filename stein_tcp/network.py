@@ -1,14 +1,16 @@
 import argparse
-import subprocess
+import sys
 import logging
-import os
 import asyncio
 import pathlib
-import shutil
 import time
 
-from stein_tcp.util import shell, ip, netns, rely_tunnel
+from .util.ip import IP
+from .util.netns import NetNS
+from .util.shell import Shell
+from .util.rely_tunnel import RelyTunnel
 
+from . import server, client
 
 
 def script_path() -> pathlib.Path:
@@ -52,10 +54,10 @@ async def network(
 
     server_ip = "10.0.0.1:12345"
 
-    shell = shell.Shell(log=log, sudo=True)
+    shell = Shell(log=log, sudo=True)
 
     log.info("Creating namespaces")
-    netns = netns.NetNS(shell=shell, ip_factory=ip.IP)
+    netns = NetNS(shell=shell, ip_factory=IP)
     namespaces = netns.list()
 
     if "demo0" in namespaces:
@@ -67,7 +69,7 @@ async def network(
     demo0 = netns.add(name="demo0")
     demo1 = netns.add(name="demo1")
 
-    ip = ip.IP(shell=shell)
+    ip = IP(shell=shell)
     ip.link_veth_add(p1_name="demo0-eth", p2_name="demo1-eth")
     ip.link_set(namespace="demo0", interface="demo0-eth")
     ip.link_set(namespace="demo1", interface="demo1-eth")
@@ -91,11 +93,11 @@ async def network(
 
         log.debug("Starting Rely Daemon Servers...")
 
-        rely_tunnel0 = rely_tunnel.RelyTunnel(
+        rely_tunnel0 = RelyTunnel(
             shell=demo0.shell,
             rely_path=rely_path,
         )
-        rely_tunnel1 = rely_tunnel.RelyTunnel(
+        rely_tunnel1 = RelyTunnel(
             shell=demo1.shell,
             rely_path=rely_path,
         )
@@ -158,12 +160,12 @@ async def network(
 
         await asyncio.gather(
             demo0.run_async(
-                f"python3 server.py --packets {packets} --packet_size {packet_size} --server_ip {server_ip} --bandwidth {bandwidth}",
+                f"{sys.executable} {server.__file__} --packets {packets} --packet_size {packet_size} --server_ip {server_ip} --bandwidth {bandwidth}",
                 delay=2,
                 cwd=script_path(),
             ),
             demo1.run_async(
-                f"python3 client.py --server_ip {server_ip} --packet_size {packet_size} --clock-sync "
+                f"{sys.executable} {client.__file__} --server_ip {server_ip} --packet_size {packet_size} --clock-sync "
                 f"--result_path={result_path.resolve()} {verbose}",
                 delay=4,
                 cwd=script_path(),
@@ -175,7 +177,7 @@ async def network(
         pass
 
 
-def main():
+def network_cli():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -184,6 +186,7 @@ def main():
         type=int,
         help="The number of packet to receive",
         default=1000,
+        metavar="",
     )
 
     parser.add_argument(
@@ -192,10 +195,15 @@ def main():
         type=float,
         help="The bandwidth from the server to the client in MB/s",
         default=1,
+        metavar="",
     )
 
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Get debug info", default=False
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Get debug info",
+        default=False,
     )
 
     parser.add_argument(
@@ -204,6 +212,7 @@ def main():
         type=int,
         help="The number of packet to receive",
         default=1300,
+        metavar="",
     )
 
     parser.add_argument(
@@ -212,6 +221,7 @@ def main():
         type=str,
         help="The path to the results",
         default="result.json",
+        metavar="",
     )
 
     parser.add_argument(
@@ -219,7 +229,8 @@ def main():
         "--rely_path",
         type=str,
         help="The path to the rely_app binary",
-        default="rely",
+        default=None,
+        metavar="",
     )
 
     parser.add_argument(
@@ -228,6 +239,7 @@ def main():
         type=int,
         help="The distance in packets between each generation of repair",
         default=5,
+        metavar="",
     )
     parser.add_argument(
         "-r",
@@ -235,6 +247,7 @@ def main():
         type=int,
         help="The number of repair packets to generate at each generation",
         default=1,
+        metavar="",
     )
 
     parser.add_argument(
@@ -243,6 +256,7 @@ def main():
         type=int,
         help="The time a packet is held by the encoder/decoder",
         default=60,
+        metavar="",
     )
 
     log = logging.getLogger("client")
@@ -257,20 +271,10 @@ def main():
         log.setLevel(logging.INFO)
         verbose = ""
 
-    shell = shell.Shell(log=log, sudo=False)
-
     rely_path = None
 
-    if args.rely_path == "rely":
-        try:
-            shell.run("rely -v")
-            rely_path = "rely"
-        except subprocess.CalledProcessError:
-            try:
-                shell.run("rely_app -v")
-                rely_path = "rely_app"
-            except subprocess.CalledProcessError:
-                rely_path = shutil.which("rely") or shutil.which("rely_app")
+    if args.rely_path:
+        rely_path = pathlib.Path(args.rely_path).resolve()
 
     asyncio.run(
         network(
@@ -289,4 +293,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    network_cli()
