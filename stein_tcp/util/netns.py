@@ -1,4 +1,4 @@
-from . import namespace_shell
+from .namespace_shell import NamespaceShell
 
 
 class NetNS(object):
@@ -23,5 +23,5 @@ class NetNS(object):
     def add(self, name):
         self.shell.run(cmd=f"ip netns add {name}", cwd=None)
 
-        shell = namespace_shell.NamespaceShell(name=name, shell=self.shell)
+        shell = NamespaceShell(name=name, shell=self.shell)
         return self.ip_factory(shell)
