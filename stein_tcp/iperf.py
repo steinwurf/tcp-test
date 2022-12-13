@@ -48,9 +48,13 @@ async def iperf(
     repair_interval: int,
     repair_target: int,
     timeout: int,
+    encoder_max_stream_size: int,
+    decoder_max_stream_size: int,
+    loss: int,
+    delay: int,
 ):
 
-    server_ip = "10.0.0.1:12345"
+    server_ip = "10.0.0.1"
 
     shell = Shell(log=log, sudo=True)
 
@@ -84,8 +88,8 @@ async def iperf(
     demo0.up(interface="lo")
     demo1.up(interface="lo")
 
-    demo0.tc(interface="demo0-eth", delay=20, loss=1)
-    demo1.tc(interface="demo1-eth", delay=20, loss=1)
+    demo0.tc(interface="demo0-eth", delay=delay, loss=loss)
+    demo1.tc(interface="demo1-eth", delay=delay, loss=loss)
 
     log.debug(demo0.tc_show(interface="demo0-eth"))
     log.debug(demo1.tc_show(interface="demo1-eth"))
@@ -115,17 +119,21 @@ async def iperf(
         rely_tunnel0.start_tunnel(
             id="demo0tun",
             tunnel_ip="11.11.11.11",
-            tunnel_in=f"{server_ip}",
+            tunnel_in=f"{server_ip}:12345",
             tunnel_out=f"10.0.0.2:12345",
             packet_size=packet_size,
+            encoder_max_stream_size=encoder_max_stream_size,
+            decoder_max_stream_size=decoder_max_stream_size,
         )
 
         rely_tunnel1.start_tunnel(
             id="demo1tun",
             tunnel_ip="11.11.11.22",
             tunnel_in=f"10.0.0.2:12345",
-            tunnel_out=f"{server_ip}",
+            tunnel_out=f"{server_ip}:12345",
             packet_size=packet_size,
+            encoder_max_stream_size=encoder_max_stream_size,
+            decoder_max_stream_size=decoder_max_stream_size,
         )
 
         log.debug(
@@ -274,6 +282,40 @@ def iperf_cli():
         metavar="",
     )
 
+    parser.add_argument(
+        "-em",
+        "--encoder_max_stream_size",
+        type=int,
+        help="The maximum size of the stream",
+        default=100,
+        metavar="",
+    )
+
+    parser.add_argument(
+        "-dm",
+        "--decoder_max_stream_size",
+        type=int,
+        help="The maximum size of the stream",
+        default=200,
+        metavar="",
+    )
+
+    parser.add_argument(
+        "--loss",
+        type=int,
+        help="The loss rate of the network",
+        default=1,
+        metavar="",
+    )
+
+    parser.add_argument(
+        "--delay",
+        type=int,
+        help="The delay of the network",
+        default=20,
+        metavar="",
+    )
+
     log = logging.getLogger("client")
     log.addHandler(logging.StreamHandler())
 
@@ -303,6 +345,10 @@ def iperf_cli():
             repair_interval=args.repair_interval,
             repair_target=args.repair_target,
             timeout=args.timeout,
+            encoder_max_stream_size=args.encoder_max_stream_size,
+            decoder_max_stream_size=args.decoder_max_stream_size,
+            loss=args.loss,
+            delay=args.delay,
         )
     )
 

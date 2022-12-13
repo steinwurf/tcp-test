@@ -10,9 +10,19 @@ class RelyTunnel(object):
         self.shell = shell
         self.path = rely_path
 
-    def start_tunnel(self, id, tunnel_ip, tunnel_in, tunnel_out, packet_size, cwd=None):
+    def start_tunnel(
+        self,
+        id,
+        tunnel_ip,
+        tunnel_in,
+        tunnel_out,
+        packet_size,
+        encoder_max_stream_size=100,
+        decoder_max_stream_size=200,
+        cwd=None,
+    ):
         self.shell.run(
-            cmd=f"{self.path} add tun --id {id} --packet-size {packet_size} --tunnel-in {tunnel_in} --tunnel-out {tunnel_out} --tun-ip {tunnel_ip}",
+            cmd=f"{self.path} add tun --id {id} --packet-size {packet_size} --tunnel-in {tunnel_in} --tunnel-out {tunnel_out} --tun-ip {tunnel_ip} --encoder-max-stream-size {encoder_max_stream_size} --decoder-max-stream-size {decoder_max_stream_size}",
             cwd=cwd,
         )
 
