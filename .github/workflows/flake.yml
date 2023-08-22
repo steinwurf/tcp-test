@@ -8,7 +8,7 @@ name: Flake8
   push:
     branches:
     - master
-  pull_request: null
+  pull_request:
 jobs:
   flake8:
     name: Flake8 Syntax Check
