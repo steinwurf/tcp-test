@@ -8,7 +8,7 @@ name: Flake8
   push:
     branches:
     - master
-  pull_request:
+  pull_request: null
 jobs:
   flake8:
     name: Flake8 Syntax Check
@@ -25,3 +25,6 @@ jobs:
       run: echo "[flake8]\n\nignore = F632" >> .flake8
     - name: Check python syntax
       uses: cclauss/Find-Python-syntax-errors-action@master
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
